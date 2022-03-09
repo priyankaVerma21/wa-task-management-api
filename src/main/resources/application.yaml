@@ -83,6 +83,10 @@ spring:
       hibernate:
         default_schema: ${POSTGRES_NAME:cft_task_db}
         dialect: "uk.gov.hmcts.reform.wataskmanagementapi.config.CustomPostgreSQL94Dialect"
+        format_sql: true
+        show-sql: true
+    show-sql: true
+
   flyway:
     enabled: true
     baselineOnMigrate: true
@@ -120,6 +124,8 @@ logging:
     root: INFO
     uk.gov.hmcts.reform.wataskmanagementapi.clients.*: INFO
     org.zalando.logbook: INFO
+    org:
+      hibernate: trace
 
 logbook:
   include: /task/**
