@@ -7,7 +7,8 @@ import uk.gov.hmcts.reform.wataskmanagementapi.cft.entities.TaskRoleResource;
 import java.util.List;
 
 public interface TaskRoleResourceRepository
-    extends CrudRepository<TaskRoleResource, String>, JpaSpecificationExecutor<TaskRoleResource> {
+    extends CrudRepository<TaskRoleResource,
+    String>, JpaSpecificationExecutor<TaskRoleResource> {
 
     List<TaskRoleResource> findByTaskId(String taskId);
 

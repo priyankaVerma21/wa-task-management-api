@@ -16,8 +16,8 @@ import java.util.Optional;
 import javax.persistence.LockModeType;
 import javax.persistence.QueryHint;
 
-public interface TaskResourceRepository extends CrudRepository<TaskResource, String>,
-    JpaSpecificationExecutor<TaskResource> {
+public interface TaskResourceRepository extends
+    CrudRepository<TaskResource, String>, JpaSpecificationExecutor<TaskResource> {
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @QueryHints({@QueryHint(name = "javax.persistence.lock.timeout", value = "0")})
@@ -44,5 +44,7 @@ public interface TaskResourceRepository extends CrudRepository<TaskResource, Str
         @Param("created") OffsetDateTime created,
         @Param("due_date_time") OffsetDateTime dueDate
     );
+
+
 
 }

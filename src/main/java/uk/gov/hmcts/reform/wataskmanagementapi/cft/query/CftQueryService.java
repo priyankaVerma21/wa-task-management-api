@@ -12,7 +12,9 @@ import uk.gov.hmcts.reform.wataskmanagementapi.auth.access.entities.AccessContro
 import uk.gov.hmcts.reform.wataskmanagementapi.auth.idam.entities.SearchEventAndCase;
 import uk.gov.hmcts.reform.wataskmanagementapi.auth.permission.entities.PermissionTypes;
 import uk.gov.hmcts.reform.wataskmanagementapi.cft.entities.TaskResource;
+import uk.gov.hmcts.reform.wataskmanagementapi.cft.entities.summary.TaskSummaryProjection;
 import uk.gov.hmcts.reform.wataskmanagementapi.cft.repository.TaskResourceRepository;
+import uk.gov.hmcts.reform.wataskmanagementapi.cft.repository.TaskResourceWithProjectionRepository;
 import uk.gov.hmcts.reform.wataskmanagementapi.controllers.request.SearchTaskRequest;
 import uk.gov.hmcts.reform.wataskmanagementapi.controllers.response.GetTasksCompletableResponse;
 import uk.gov.hmcts.reform.wataskmanagementapi.controllers.response.GetTasksResponse;
@@ -46,6 +48,17 @@ public class CftQueryService {
     private final CamundaService camundaService;
     private final CFTTaskMapper cftTaskMapper;
     private final TaskResourceRepository taskResourceRepository;
+    private TaskResourceWithProjectionRepository taskResourceWithProjectionRepository;
+
+    public CftQueryService(CamundaService camundaService,
+                           CFTTaskMapper cftTaskMapper,
+                           TaskResourceRepository taskResourceRepository,
+                           TaskResourceWithProjectionRepository taskResourceWithProjectionRepository) {
+        this.camundaService = camundaService;
+        this.cftTaskMapper = cftTaskMapper;
+        this.taskResourceRepository = taskResourceRepository;
+        this.taskResourceWithProjectionRepository = taskResourceWithProjectionRepository;
+    }
 
     public CftQueryService(CamundaService camundaService,
                            CFTTaskMapper cftTaskMapper,
@@ -71,6 +84,13 @@ public class CftQueryService {
             .buildTaskQuery(searchTaskRequest, accessControlResponse, permissionsRequired);
 
         final Page<TaskResource> pages = taskResourceRepository.findAll(taskResourceSpecification, page);
+
+        final Page<TaskResourceWithProjectionRepository.TaskSummaryProjection> summaryPage =
+            taskResourceWithProjectionRepository.findAll(taskResourceSpecification, TaskResourceWithProjectionRepository.TaskSummaryProjection.class, page);
+        log.info("Summary Task: {}, and first record has {}",
+            summaryPage.getTotalElements(),
+            summaryPage.get().findFirst().get().getTaskId()
+        );
 
         final List<TaskResource> taskResources = pages.toList();
 

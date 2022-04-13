@@ -22,6 +22,7 @@ import uk.gov.hmcts.reform.wataskmanagementapi.auth.role.entities.RoleAttributeD
 import uk.gov.hmcts.reform.wataskmanagementapi.auth.role.entities.enums.Classification;
 import uk.gov.hmcts.reform.wataskmanagementapi.auth.role.entities.enums.GrantType;
 import uk.gov.hmcts.reform.wataskmanagementapi.cft.repository.TaskResourceRepository;
+import uk.gov.hmcts.reform.wataskmanagementapi.cft.repository.TaskResourceWithProjectionRepository;
 import uk.gov.hmcts.reform.wataskmanagementapi.controllers.request.SearchTaskRequest;
 import uk.gov.hmcts.reform.wataskmanagementapi.controllers.response.GetTasksResponse;
 import uk.gov.hmcts.reform.wataskmanagementapi.domain.entities.search.SearchOperator;
@@ -64,13 +65,20 @@ public class CftQueryServiceITTest {
     private CamundaService camundaService;
     @Autowired
     private TaskResourceRepository taskResourceRepository;
+    @Autowired
+    private TaskResourceWithProjectionRepository taskResourceWithProjectionRepository;
 
     private CftQueryService cftQueryService;
 
     @BeforeEach
     void setUp() {
         CFTTaskMapper cftTaskMapper = new CFTTaskMapper(new ObjectMapper());
-        cftQueryService = new CftQueryService(camundaService, cftTaskMapper, taskResourceRepository);
+        cftQueryService =
+            new CftQueryService(
+                camundaService,
+                cftTaskMapper,
+                taskResourceRepository,
+                taskResourceWithProjectionRepository);
     }
 
     @ParameterizedTest()
