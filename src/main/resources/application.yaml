@@ -117,6 +117,13 @@ launchDarkly:
 
 logging:
   level:
+    org:
+      hibernate:
+        type:
+          descriptor:
+            sql:
+              BasicBinder: TRACE
+        SQL: DEBUG
     root: INFO
     uk.gov.hmcts.reform.wataskmanagementapi.clients.*: INFO
     org.zalando.logbook: INFO

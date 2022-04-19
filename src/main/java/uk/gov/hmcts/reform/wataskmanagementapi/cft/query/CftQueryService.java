@@ -12,9 +12,8 @@ import uk.gov.hmcts.reform.wataskmanagementapi.auth.access.entities.AccessContro
 import uk.gov.hmcts.reform.wataskmanagementapi.auth.idam.entities.SearchEventAndCase;
 import uk.gov.hmcts.reform.wataskmanagementapi.auth.permission.entities.PermissionTypes;
 import uk.gov.hmcts.reform.wataskmanagementapi.cft.entities.TaskResource;
-import uk.gov.hmcts.reform.wataskmanagementapi.cft.entities.summary.TaskSummaryProjection;
 import uk.gov.hmcts.reform.wataskmanagementapi.cft.repository.TaskResourceRepository;
-import uk.gov.hmcts.reform.wataskmanagementapi.cft.repository.TaskResourceWithProjectionRepository;
+import uk.gov.hmcts.reform.wataskmanagementapi.cft.repository.TaskResourceProjection;
 import uk.gov.hmcts.reform.wataskmanagementapi.controllers.request.SearchTaskRequest;
 import uk.gov.hmcts.reform.wataskmanagementapi.controllers.response.GetTasksCompletableResponse;
 import uk.gov.hmcts.reform.wataskmanagementapi.controllers.response.GetTasksResponse;
@@ -48,16 +47,16 @@ public class CftQueryService {
     private final CamundaService camundaService;
     private final CFTTaskMapper cftTaskMapper;
     private final TaskResourceRepository taskResourceRepository;
-    private TaskResourceWithProjectionRepository taskResourceWithProjectionRepository;
+    private TaskResourceProjection taskResourceProjection;
 
     public CftQueryService(CamundaService camundaService,
                            CFTTaskMapper cftTaskMapper,
                            TaskResourceRepository taskResourceRepository,
-                           TaskResourceWithProjectionRepository taskResourceWithProjectionRepository) {
+                           TaskResourceProjection taskResourceProjection) {
         this.camundaService = camundaService;
         this.cftTaskMapper = cftTaskMapper;
         this.taskResourceRepository = taskResourceRepository;
-        this.taskResourceWithProjectionRepository = taskResourceWithProjectionRepository;
+        this.taskResourceProjection = taskResourceProjection;
     }
 
     public CftQueryService(CamundaService camundaService,
@@ -80,17 +79,35 @@ public class CftQueryService {
         Sort sort = SortQuery.sortByFields(searchTaskRequest);
         Pageable page = OffsetPageableRequest.of(firstResult, maxResults, sort);
 
-        final Specification<TaskResource> taskResourceSpecification = TaskResourceSpecification
-            .buildTaskQuery(searchTaskRequest, accessControlResponse, permissionsRequired);
+        final Specification<TaskResource> taskResourceSpecification =
+            TaskResourceSpecification.buildTaskQuery(
+                searchTaskRequest,
+                accessControlResponse,
+                permissionsRequired
+            );
 
+        log.info("=================== QUERY 1 ======================");
+
+        //This gets the fully loaded Task entity
         final Page<TaskResource> pages = taskResourceRepository.findAll(taskResourceSpecification, page);
 
-        final Page<TaskResourceWithProjectionRepository.TaskSummaryProjection> summaryPage =
-            taskResourceWithProjectionRepository.findAll(taskResourceSpecification, TaskResourceWithProjectionRepository.TaskSummaryProjection.class, page);
-        log.info("Summary Task: {}, and first record has {}",
-            summaryPage.getTotalElements(),
-            summaryPage.get().findFirst().get().getTaskId()
+        log.info("=================== QUERY 2 ======================");
+
+        //TODO is the generated SQL any different?
+        //This gets just a few fields
+        final Page<TaskResourceProjection.TaskSummary> summaryPage =
+            taskResourceProjection.findAll(
+                taskResourceSpecification,
+                TaskResourceProjection.TaskSummary.class,
+                page
+            );
+
+        log.info("Summary Task size: {}",
+            summaryPage.getTotalElements()
         );
+
+        summaryPage.get().findFirst()
+            .ifPresent(taskSummary -> log.info("First TaskSummary.taskId {}", taskSummary.getTaskId()));
 
         final List<TaskResource> taskResources = pages.toList();
 

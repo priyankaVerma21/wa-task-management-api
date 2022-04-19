@@ -316,6 +316,11 @@ dependencies {
 
   implementation group: 'org.springframework.cloud', name: 'spring-cloud-starter-openfeign', version: '3.1.1'
 
+  //TODO The latest version does not seem to work with Spring 2.6.x.  You get the following error:
+  // 'java.util.Map org.springframework.data.jpa.repository.support.CrudMethodMetadata.getQueryHints()'
+  // java.lang.NoSuchMethodError: 'java.util.Map org.springframework.data.jpa.repository.support.CrudMethodMetadata.getQueryHints()'
+  // 2.0.1 works ok but is pretty useless since the underlying sql query is not changed.
+//  implementation group: 'th.co.geniustree.springdata.jpa', name: 'specification-with-projections', version: '2.0.2'
   implementation group: 'th.co.geniustree.springdata.jpa', name: 'specification-with-projections', version: '2.0.1'
 
   implementation group: 'org.springdoc', name: 'springdoc-openapi-ui', version: versions.springDoc
