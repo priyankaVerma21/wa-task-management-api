@@ -8,12 +8,12 @@ class InitiateTaskOperationTest {
 
     @Test
     void simple_enum_example_outside_class_test() {
-        assertEquals("INITIATION", InitiateTaskOperation.INITIATION.name());
+        assertEquals("INITIATION", TaskOperation.INITIATION.name());
     }
 
     @Test
     void update_test_whenever_additions_to_assign_enum_are_made() {
-        int enumLength = InitiateTaskOperation.values().length;
+        int enumLength = TaskOperation.values().length;
         assertEquals(1, enumLength);
     }
 }

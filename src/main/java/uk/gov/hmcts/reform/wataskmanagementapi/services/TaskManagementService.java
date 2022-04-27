@@ -749,7 +749,7 @@ public class TaskManagementService {
                 }
                 log.info("Task '{}' did not have previous assignee or was invalid, attempting to auto-assign.", taskId);
                 //Otherwise attempt auto-assignment
-                taskResource = taskAutoAssignmentService.autoAssignCFTTask(taskResource);
+                taskResource = taskAutoAssignmentService.autoAssignCFTTask(taskResource, initiateTaskRequest.getOperation());
             }
 
             updateCftTaskState(taskResource.getTaskId(), taskResource);

@@ -6,6 +6,7 @@ import uk.gov.hmcts.reform.wataskmanagementapi.auth.role.entities.RoleAssignment
 import uk.gov.hmcts.reform.wataskmanagementapi.cft.entities.TaskResource;
 import uk.gov.hmcts.reform.wataskmanagementapi.cft.entities.TaskRoleResource;
 import uk.gov.hmcts.reform.wataskmanagementapi.cft.enums.CFTTaskState;
+import uk.gov.hmcts.reform.wataskmanagementapi.controllers.request.enums.TaskOperation;
 import uk.gov.hmcts.reform.wataskmanagementapi.taskconfiguration.auth.role.TaskConfigurationRoleAssignmentService;
 import uk.gov.hmcts.reform.wataskmanagementapi.taskconfiguration.domain.entities.configuration.AutoAssignmentResult;
 import uk.gov.hmcts.reform.wataskmanagementapi.taskconfiguration.domain.entities.configuration.TaskToConfigure;
@@ -57,7 +58,7 @@ public class TaskAutoAssignmentService {
         }
     }
 
-    public TaskResource autoAssignCFTTask(TaskResource taskResource) {
+    public TaskResource autoAssignCFTTask(TaskResource taskResource, TaskOperation operation) {
         List<RoleAssignment> roleAssignments =
             taskConfigurationRoleAssignmentService.queryRolesForAutoAssignmentByCaseId(taskResource);
 
@@ -76,12 +77,16 @@ public class TaskAutoAssignmentService {
             taskResource.setState(CFTTaskState.UNASSIGNED);
         } else {
 
-            if (taskResource.getAssignee() != null) {
-                boolean isOwnOrExecute = taskResource.getTaskRoleResources().stream().map(TaskRoleResource::getRoleName)
-                    .anyMatch(name -> "OWN".equals(name) || "EXECUTE".equals(name));
-                if (!isOwnOrExecute) {
-                    taskResource.setAssignee(null);
-                    taskResource.setState(CFTTaskState.UNASSIGNED);
+            if (operation.name().equalsIgnoreCase(TaskOperation.RECONFIGURE.name()) && taskResource.getAssignee() != null) {
+                List<RoleAssignment> roleAssignmentsForCurrentAssignee = taskConfigurationRoleAssignmentService.getRolesByUserId(taskResource.getAssignee());
+                if(!roleAssignmentsForCurrentAssignee.isEmpty()) {
+                    boolean isOwnOrExecute = taskResource.getTaskRoleResources().stream()
+                        .filter(taskRoleResource -> taskResource.getAssignee().equalsIgnoreCase(roleAssignmentsForCurrentAssignee.get(0).getActorId()))
+                        .anyMatch(roleResource -> isTaskRoleResourceOwnOrExecute(roleResource));
+                    if (!isOwnOrExecute) {
+                        taskResource.setAssignee(null);
+                        taskResource.setState(CFTTaskState.UNASSIGNED);
+                    }
                 }
             }
             Optional<RoleAssignment> match = runRoleAssignmentAutoAssignVerification(taskResource, roleAssignments);
@@ -145,6 +150,10 @@ public class TaskAutoAssignmentService {
         }
     }
 
+    private boolean isTaskRoleResourceOwnOrExecute(TaskRoleResource taskRoleResource) {
+        return taskRoleResource.getOwn() || taskRoleResource.getExecute();
+    }
+
     private boolean isTaskRoleNotAutoAssignableOrAuthorisationsNotMatching(RoleAssignment roleAssignment,
                                                                            TaskRoleResource taskRoleResource) {
         return !taskRoleResource.getAutoAssignable()
@@ -177,7 +186,8 @@ public class TaskAutoAssignmentService {
                 //Safe-guard
                 if (!hasMatch.get()
                     && roleAssignment.getAuthorisations() != null
-                    && roleAssignment.getAuthorisations().contains(auth)) {
+                    && roleAssignment.getAuthorisations().contains(auth)
+                    && isTaskRoleResourceOwnOrExecute(taskRoleResource)) {
                     hasMatch.set(true);
                 }
             });

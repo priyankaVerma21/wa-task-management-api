@@ -24,7 +24,7 @@ import uk.gov.hmcts.reform.wataskmanagementapi.config.LaunchDarklyFeatureFlagPro
 import uk.gov.hmcts.reform.wataskmanagementapi.config.features.FeatureFlag;
 import uk.gov.hmcts.reform.wataskmanagementapi.controllers.request.InitiateTaskRequest;
 import uk.gov.hmcts.reform.wataskmanagementapi.controllers.request.entities.TaskAttribute;
-import uk.gov.hmcts.reform.wataskmanagementapi.controllers.request.enums.InitiateTaskOperation;
+import uk.gov.hmcts.reform.wataskmanagementapi.controllers.request.enums.TaskOperation;
 import uk.gov.hmcts.reform.wataskmanagementapi.taskconfiguration.domain.entities.configuration.TaskToConfigure;
 import uk.gov.hmcts.reform.wataskmanagementapi.taskconfiguration.services.ConfigureTaskService;
 import uk.gov.hmcts.reform.wataskmanagementapi.taskconfiguration.services.TaskAutoAssignmentService;
@@ -74,7 +74,7 @@ public class InitiateTaskDbLockAndTransactionTest extends SpringBootIntegrationB
     String formattedDueDate = CAMUNDA_DATA_TIME_FORMATTER.format(dueDate);
 
     private final InitiateTaskRequest initiateTaskRequest = new InitiateTaskRequest(
-        InitiateTaskOperation.INITIATION,
+        TaskOperation.INITIATION,
         List.of(
             new TaskAttribute(TASK_TYPE, A_TASK_TYPE),
             new TaskAttribute(TASK_ASSIGNEE, SOME_ASSIGNEE),

@@ -5,7 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import uk.gov.hmcts.reform.wataskmanagementapi.controllers.request.entities.TaskAttribute;
-import uk.gov.hmcts.reform.wataskmanagementapi.controllers.request.enums.InitiateTaskOperation;
+import uk.gov.hmcts.reform.wataskmanagementapi.controllers.request.enums.TaskOperation;
 
 import java.util.List;
 
@@ -17,17 +17,17 @@ import java.util.List;
 @ToString
 public class InitiateTaskRequest {
 
-    private final InitiateTaskOperation operation;
+    private final TaskOperation operation;
     private final List<TaskAttribute> taskAttributes;
 
     @JsonCreator
-    public InitiateTaskRequest(InitiateTaskOperation operation,
+    public InitiateTaskRequest(TaskOperation operation,
                                List<TaskAttribute> taskAttributes) {
         this.operation = operation;
         this.taskAttributes = taskAttributes;
     }
 
-    public InitiateTaskOperation getOperation() {
+    public TaskOperation getOperation() {
         return operation;
     }
 

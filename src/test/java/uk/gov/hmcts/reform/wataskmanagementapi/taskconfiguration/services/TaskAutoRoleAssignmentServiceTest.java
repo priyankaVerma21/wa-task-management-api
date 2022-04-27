@@ -244,7 +244,7 @@ class TaskAutoRoleAssignmentServiceTest {
         //set senior-tribunal-caseworker high prioritised user
         Set<TaskRoleResource> taskRoleResources = Set.of(
             taskRoleResource("tribunal-caseworker", true, 2),
-            taskRoleResource("senior-tribunal-caseworker", false, 1)
+            taskRoleResource("senior-tribunal-caseworker", true, 1)
         );
         taskResource.setTaskRoleResources(taskRoleResources);
 
@@ -293,6 +293,70 @@ class TaskAutoRoleAssignmentServiceTest {
         assertThat(autoAssignCFTTaskResponse.getAssignee())
             .isEqualTo(roleAssignmentResource2.getActorId());
 
+    }
+
+    @Test
+    void should_reassign_task_if_current_assignee_is_not_valid() {
+        TaskRoleResource taskRoleResource1 = new TaskRoleResource(
+            "tribunal-caseworker",
+            true,
+            false,
+            false,
+            true,
+            true,
+            true,
+            new String[]{"IA"},
+            0,
+            true
+        );
+
+        TaskRoleResource taskRoleResource2 = new TaskRoleResource(
+            "senior-tribunal-caseworker",
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            new String[]{"IA"},
+            0,
+            true
+        );
+
+        TaskResource taskResource = createTaskResource();
+        taskResource.setAssignee("lowPrioritisedUser");
+        taskResource.setState(CFTTaskState.ASSIGNED);
+        taskResource.setAutoAssigned(true);
+        taskResource.setTaskRoleResources(Set.of(taskRoleResource1, taskRoleResource2));
+
+        List<RoleAssignment> roleAssignments = new ArrayList<>();
+
+        //first role assignment set
+        RoleAssignment roleAssignmentResource1 = createRoleAssignment(
+            "lowPrioritisedUser",
+            "tribunal-caseworker",
+            List.of("IA", "DIVORCE", "PROBATE")
+        );
+
+        roleAssignments.add(roleAssignmentResource1);
+
+        //second role assignment set
+        RoleAssignment roleAssignmentResource2 = createRoleAssignment(
+            "highPrioritisedUser",
+            "senior-tribunal-caseworker",
+            List.of("IA", "DIVORCE", "PROBATE")
+        );
+        roleAssignments.add(roleAssignmentResource2);
+
+        when(roleAssignmentService.queryRolesForAutoAssignmentByCaseId(taskResource))
+            .thenReturn(roleAssignments);
+
+        TaskResource autoAssignCFTTaskResponse = taskAutoAssignmentService.autoAssignCFTTask(taskResource);
+
+        assertEquals(CFTTaskState.ASSIGNED, autoAssignCFTTaskResponse.getState());
+        assertNotNull(autoAssignCFTTaskResponse.getAssignee());
+        assertThat(autoAssignCFTTaskResponse.getAssignee())
+            .isEqualTo(roleAssignmentResource2.getActorId());
     }
 
     @Test
