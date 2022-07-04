@@ -8,6 +8,7 @@ public enum SearchParameterKey {
     USER("user"),
     JURISDICTION("jurisdiction"),
     STATE("state"),
+    CFT_TASK_STATE("cftTaskState"),
     TASK_ID("taskId"),
     TASK_TYPE("taskType"),
     CASE_ID("caseId"),

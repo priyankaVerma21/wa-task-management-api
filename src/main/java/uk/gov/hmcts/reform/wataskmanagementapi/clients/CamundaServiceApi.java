@@ -17,6 +17,7 @@ import uk.gov.hmcts.reform.wataskmanagementapi.domain.entities.camunda.CamundaTa
 import uk.gov.hmcts.reform.wataskmanagementapi.domain.entities.camunda.CamundaVariable;
 import uk.gov.hmcts.reform.wataskmanagementapi.domain.entities.camunda.CamundaVariableInstance;
 import uk.gov.hmcts.reform.wataskmanagementapi.domain.entities.camunda.CompleteTaskVariables;
+import uk.gov.hmcts.reform.wataskmanagementapi.domain.entities.camunda.HistoricCamundaTask;
 import uk.gov.hmcts.reform.wataskmanagementapi.domain.entities.camunda.HistoryVariableInstance;
 
 import java.util.List;
@@ -69,6 +70,18 @@ public interface CamundaServiceApi {
     @ResponseBody
     CamundaTaskCount getTaskCount(@RequestHeader(SERVICE_AUTHORIZATION) String serviceAuthorisation,
                                   @RequestBody Map<String, Object> body);
+
+    @PostMapping(value = "/history/task",
+        consumes = APPLICATION_JSON_VALUE,
+        produces = APPLICATION_JSON_VALUE
+    )
+    @ResponseBody
+    List<HistoricCamundaTask> getTasksFromHistory(
+        @RequestHeader(SERVICE_AUTHORIZATION) String serviceAuthorisation,
+        @RequestParam(value = "firstResult", required = false, defaultValue = "0") String firstResult,
+        @RequestParam(value = "maxResults", required = false, defaultValue = "100") String maxResults,
+        @RequestBody String body
+    );
 
     @GetMapping(
         value = "/task/{task-id}",
@@ -128,7 +141,7 @@ public interface CamundaServiceApi {
                                                    @PathVariable("jurisdiction") String jurisdiction,
                                                    @RequestBody Map<String, Map<String, CamundaVariable>> body);
 
-    
+
     @GetMapping(
         value = "/task/{task-id}/variables",
         produces = APPLICATION_JSON_VALUE
