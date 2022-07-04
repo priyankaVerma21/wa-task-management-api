@@ -1,0 +1,19 @@
+{
+  "taskDefinitionKey": "processTask",
+  "processDefinitionKey": "wa-task-initiation-ia-asylum",
+  "taskVariables": [
+    {
+      "name": "taskState",
+      "operator": "eq",
+      "value": "assigned"
+    }
+  ],
+  "finishedAfter": "*",
+  "finishedBefore": "*",
+  "sorting": [
+    {
+      "sortBy": "created",
+      "sortOrder": "desc"
+    }
+  ]
+}

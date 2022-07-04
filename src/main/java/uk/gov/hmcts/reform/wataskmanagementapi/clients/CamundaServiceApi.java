@@ -63,6 +63,16 @@ public interface CamundaServiceApi {
                                                       @RequestParam("maxResults") Integer maxResults,
                                                       @RequestBody Map<String, Object> body);
 
+    @PostMapping(value = "/task",
+        consumes = APPLICATION_JSON_VALUE,
+        produces = APPLICATION_JSON_VALUE
+    )
+    @ResponseBody
+    List<CamundaTask> searchWithCriteriaByQuery(@RequestHeader(SERVICE_AUTHORIZATION) String serviceAuthorisation,
+                                                      @RequestParam("firstResult") Integer firstResult,
+                                                      @RequestParam("maxResults") Integer maxResults,
+                                                      @RequestBody String body);
+
     @PostMapping(value = "/task/count",
         consumes = APPLICATION_JSON_VALUE,
         produces = APPLICATION_JSON_VALUE
