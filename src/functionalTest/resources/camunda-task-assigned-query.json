@@ -10,11 +10,21 @@
           "value": "assigned"
         }
       ]
+    },
+    {
+      "taskVariables": [
+        {
+          "name": "cftTaskState",
+          "operator": "eq",
+          "value": "unassigned"
+        }
+      ]
     }
   ],
+  "createdBefore": "2022-07-03T00:30:00.547+0000",
   "sorting": [
     {
-      "sortBy": "created",
+      "sortBy": "assignee",
       "sortOrder": "desc"
     }
   ]

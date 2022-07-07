@@ -8,8 +8,6 @@
       "value": "pendingTermination"
     }
   ],
-  "finishedAfter": "*",
-  "finishedBefore": "*",
   "sorting": [
     {
       "sortBy": "endTime",
