@@ -42,7 +42,7 @@ public class UpdateCamundaTaskVariable extends SpringBootFunctionalBaseTest {
     public void update_camunda_task_variable_while_reading_from_a_file() {
         String authorisation = "Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ3YV90YXNrX21hbmFnZW1lbnRfYXBpIiwiZXhwIjoxNjU2NzcwNTUzfQ.0NxOCOKcOYJ-a9q7xARN3AuIQtGYVyey83DQQG33N0-XXdwGLdCyyxhJmzLB8YiVRwd54_SjT821g0X6XFLzFg";
         String input = getResource("assigned_task_for_migration.csv");
-        String[] split = input.replaceAll("    ", "").split("\n");
+        String[] split = input.split(",\n");
 
 
         List<String> failedTasks = new ArrayList<>();
@@ -52,7 +52,7 @@ public class UpdateCamundaTaskVariable extends SpringBootFunctionalBaseTest {
                                          try {
                                              camundaService.updateCftTaskState(
                                                  taskId.trim(),
-                                                 TaskState.UNCONFIGURED,
+                                                 TaskState.ASSIGNED,
                                                  authorisation
                                              );
                                          } catch (Exception ex) {
