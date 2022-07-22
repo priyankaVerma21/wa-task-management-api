@@ -5,27 +5,20 @@
     {
       "taskVariables": [
         {
-          "name": "taskState",
+          "name": "taskType",
           "operator": "eq",
-          "value": "assigned"
+          "value": "startDecisionsAndReasonsDocument"
         }
       ]
     },
     {
-      "taskVariables": [
+      "processVariables": [
         {
-          "name": "cftTaskState",
+          "name": "taskState",
           "operator": "eq",
-          "value": "unassigned"
+          "value": "unconfigured"
         }
       ]
-    }
-  ],
-  "createdBefore": "2022-07-03T00:30:00.547+0000",
-  "sorting": [
-    {
-      "sortBy": "assignee",
-      "sortOrder": "desc"
     }
   ]
 }

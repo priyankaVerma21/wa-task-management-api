@@ -81,7 +81,7 @@ public class UpdateCamundaTaskVariable extends SpringBootFunctionalBaseTest {
                 + finishedBefore + "\",");
 
         List<String> failedTasks = new ArrayList<>();
-        for (int firstResult = 0; firstResult < 9; firstResult += 100) {
+        for (int firstResult = 0; firstResult < 1; firstResult += 100) {
             log.info("firstResult " + firstResult);
             String firstResultString = Integer.toString(firstResult);
             log.info("processing for first result " + firstResultString);
@@ -96,14 +96,15 @@ public class UpdateCamundaTaskVariable extends SpringBootFunctionalBaseTest {
                 .forEach(task ->
                          {
                              String taskId = task.getId();
-                             log.info("deleting cft task state of task id " + taskId);
+                             log.info("updating cft task state of task id " + taskId);
                              try {
                                  camundaService.updateCftTaskState(
-                                     "e2a524ad-f956-11ec-be36-e66049a77c29",
+                                     taskId,
                                      TaskState.UNCONFIGURED,
                                      authorisation
                                  );
                              } catch (Exception ex) {
+                                 ex.printStackTrace();
                                  failedTasks.add(taskId);
                              }
                          });
