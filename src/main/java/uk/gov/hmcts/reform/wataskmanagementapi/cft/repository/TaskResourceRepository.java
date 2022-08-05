@@ -35,6 +35,12 @@ public interface TaskResourceRepository extends CrudRepository<TaskResource, Str
     List<TaskResource> findByCaseIdInAndStateInAndReconfigureRequestTimeIsNull(
         List<String> caseIds, List<CFTTaskState> states);
 
+    List<TaskResource> findByStateInAndReconfigureRequestTimeIsNotNull(
+        List<CFTTaskState> states);
+
+    List<TaskResource> findByTaskIdInAndStateInAndReconfigureRequestTimeIsLessThan(
+        List<String> taskIds, List<CFTTaskState> states, OffsetDateTime retry);
+
     @Modifying
     @QueryHints({
         @QueryHint(name = "javax.persistence.lock.timeout", value = "0"),
@@ -43,13 +49,15 @@ public interface TaskResourceRepository extends CrudRepository<TaskResource, Str
     })
     @Query(
         value =
-            "INSERT INTO {h-schema}tasks (task_id, created, due_date_time) VALUES (:task_id, :created, :due_date_time)",
+            "INSERT INTO {h-schema}tasks (task_id, created, due_date_time, priority_date) "
+                + "VALUES (:task_id, :created, :due_date_time, :priority_date)",
         nativeQuery = true)
     @Transactional
     void insertAndLock(
         @Param("task_id") String taskId,
         @Param("created") OffsetDateTime created,
-        @Param("due_date_time") OffsetDateTime dueDate
+        @Param("due_date_time") OffsetDateTime dueDate,
+        @Param("priority_date") OffsetDateTime priorityDate
     );
 
 }

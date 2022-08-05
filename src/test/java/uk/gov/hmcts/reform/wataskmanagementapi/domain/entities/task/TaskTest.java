@@ -62,7 +62,12 @@ class TaskTest {
             new TaskPermissions(new HashSet<>(singleton(PermissionTypes.READ))),
             RoleCategory.LEGAL_OPERATIONS.name(),
             "a description",
-            ADDITIONAL_PROPERTIES
+            ADDITIONAL_PROPERTIES,
+                "nextHearingId",
+            ZonedDateTime.now(),
+            500,
+            5000,
+            dueDate
         );
 
         Assertions.assertThat(task.getId()).isEqualTo("some-id");
@@ -135,7 +140,12 @@ class TaskTest {
             new TaskPermissions(new HashSet<>(singleton(PermissionTypes.OWN))),
             RoleCategory.LEGAL_OPERATIONS.name(),
             "a description",
-            ADDITIONAL_PROPERTIES
+            ADDITIONAL_PROPERTIES,
+                "nextHearingId",
+            ZonedDateTime.now(),
+            500,
+            5000,
+            ZonedDateTime.now()
         );
 
         Assertions.assertThat(task.isAutoAssigned()).isFalse();

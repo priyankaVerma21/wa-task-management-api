@@ -13,9 +13,10 @@ import static uk.gov.hmcts.reform.wataskmanagementapi.services.SystemDateProvide
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @SuppressWarnings({"PMD.LawOfDemeter", "PMD.TooManyFields",
-    "PMD.ExcessiveParameterList", "PMD.ShortClassName", "PMD.LinguisticNaming"})
+    "PMD.ExcessiveParameterList", "PMD.ShortClassName", "PMD.LinguisticNaming","PMD.ExcessiveImports"})
 @Schema(allowableValues = "Task")
 public class Task {
+    public static final String SAMPLE_ISO_DATE_TIME = "2020-09-05T14:47:01.250542+01:00";
     @Schema(
         required = true,
         description = "Unique identifier for the task"
@@ -60,14 +61,14 @@ public class Task {
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     @JsonFormat(pattern = DATE_TIME_FORMAT)
     @Schema(
-        example = "2020-09-05T14:47:01.250542+01:00",
+        example = SAMPLE_ISO_DATE_TIME,
         description = "Optional due date for the task that will be created"
     )
     private final ZonedDateTime createdDate;
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     @JsonFormat(pattern = DATE_TIME_FORMAT)
     @Schema(
-        example = "2020-09-05T14:47:01.250542+01:00",
+        example = SAMPLE_ISO_DATE_TIME,
         description = "Optional due date for the task that will be created"
     )
     private final ZonedDateTime dueDate;
@@ -147,14 +148,43 @@ public class Task {
     @Schema(required = true,
         description = "A value describing the additional properties")
     private final Map<String, String> additionalProperties;
+    @Schema(description = "Next hearing identifier")
+    private final String nextHearingId;
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+    @JsonFormat(pattern = DATE_TIME_FORMAT)
+    @Schema(
+        example = SAMPLE_ISO_DATE_TIME,
+        description = "Next hearing date time"
+    )
+    private final ZonedDateTime nextHearingDate;
+
+    @Schema(required = true,
+        description = "A value to be able to sort by priority")
+    private final Integer minorPriority;
+
+    @Schema(required = true,
+        description = "A value to be able to sort by priority")
+    private final Integer majorPriority;
+
+    @Schema(required = true,
+        description = "A value to be able to sort by priority")
+    private final ZonedDateTime priorityDate;
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     @JsonFormat(pattern = DATE_TIME_FORMAT)
     @Schema(
-        example = "2020-09-05T14:47:01.250542+01:00",
+        example = SAMPLE_ISO_DATE_TIME,
         description = "Optional reconfigure request time"
     )
     private ZonedDateTime reconfigureRequestTime;
+
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+    @JsonFormat(pattern = DATE_TIME_FORMAT)
+    @Schema(
+        example = SAMPLE_ISO_DATE_TIME,
+        description = "Optional last reconfiguration request time"
+    )
+    private ZonedDateTime lastReconfigurationTime;
 
     public Task(String id,
                 String name,
@@ -184,7 +214,12 @@ public class Task {
                 TaskPermissions taskPermissions,
                 String roleCategory,
                 String description,
-                Map<String, String> additionalProperties) {
+                Map<String, String> additionalProperties,
+                String nextHearingId,
+                ZonedDateTime nextHearingDate,
+                Integer minorPriority,
+                Integer majorPriority,
+                ZonedDateTime priorityDate) {
         Objects.requireNonNull(id, "taskId cannot be null");
         Objects.requireNonNull(name, "name cannot be null");
         this.id = id;
@@ -216,6 +251,11 @@ public class Task {
         this.roleCategory = roleCategory;
         this.description = description;
         this.additionalProperties = additionalProperties;
+        this.nextHearingId = nextHearingId;
+        this.nextHearingDate = nextHearingDate;
+        this.minorPriority = minorPriority;
+        this.majorPriority = majorPriority;
+        this.priorityDate = priorityDate;
     }
 
     public Task(String id,
@@ -247,7 +287,13 @@ public class Task {
                 String roleCategory,
                 String description,
                 Map<String, String> additionalProperties,
-                ZonedDateTime reconfigureRequestTime) {
+                String nextHearingId,
+                ZonedDateTime nextHearingDate,
+                Integer minorPriority,
+                Integer majorPriority,
+                ZonedDateTime priorityDate,
+                ZonedDateTime reconfigureRequestTime,
+                ZonedDateTime lastReconfigurationTime) {
         this(id,
             name,
             type,
@@ -276,8 +322,15 @@ public class Task {
             taskPermissions,
             roleCategory,
             description,
-            additionalProperties);
+            additionalProperties,
+            nextHearingId,
+            nextHearingDate,
+            minorPriority,
+            majorPriority,
+            priorityDate
+        );
         this.reconfigureRequestTime = reconfigureRequestTime;
+        this.lastReconfigurationTime = lastReconfigurationTime;
     }
 
     public String getId() {
@@ -396,8 +449,32 @@ public class Task {
         return additionalProperties;
     }
 
+    public String getNextHearingId() {
+        return nextHearingId;
+    }
+
+    public ZonedDateTime getNextHearingDate() {
+        return nextHearingDate;
+    }
+
+    public Integer getMinorPriority() {
+        return minorPriority;
+    }
+
+    public Integer getMajorPriority() {
+        return majorPriority;
+    }
+
+    public ZonedDateTime getPriorityDate() {
+        return priorityDate;
+    }
+
     public ZonedDateTime getReconfigureRequestTime() {
         return reconfigureRequestTime;
+    }
+
+    public ZonedDateTime getLastReconfigurationTime() {
+        return lastReconfigurationTime;
     }
 
 }

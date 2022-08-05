@@ -75,10 +75,10 @@ class MarkTasksReconfigurableControllerTest extends SpringBootIntegrationBaseTes
             .thenReturn(true);
         lenient().when(caseConfigurationProviderService.evaluateConfigurationDmn(anyString(),
             any())).thenReturn(List.of(
-            new ConfigurationDmnEvaluationResponse(
-                CamundaValue.stringValue("caseName"),
-                CamundaValue.stringValue("Value"),
-                CamundaValue.booleanValue(true)
+                new ConfigurationDmnEvaluationResponse(
+                    CamundaValue.stringValue("caseName"),
+                    CamundaValue.stringValue("Value"),
+                    CamundaValue.booleanValue(true)
             )
         ));
     }
@@ -380,7 +380,7 @@ class MarkTasksReconfigurableControllerTest extends SpringBootIntegrationBaseTes
     }
 
     private TaskOperationRequest taskOperationRequest(TaskOperationName operationName, String caseId) {
-        TaskOperation operation = new TaskOperation(operationName, UUID.randomUUID().toString());
+        TaskOperation operation = new TaskOperation(operationName, UUID.randomUUID().toString(), 2, 120);
         return new TaskOperationRequest(operation, taskFilters(caseId));
     }
 

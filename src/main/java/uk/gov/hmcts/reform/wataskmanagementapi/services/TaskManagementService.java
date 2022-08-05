@@ -23,7 +23,6 @@ import uk.gov.hmcts.reform.wataskmanagementapi.controllers.request.SearchTaskReq
 import uk.gov.hmcts.reform.wataskmanagementapi.controllers.request.TaskOperationRequest;
 import uk.gov.hmcts.reform.wataskmanagementapi.controllers.request.entities.TaskAttribute;
 import uk.gov.hmcts.reform.wataskmanagementapi.controllers.request.enums.TaskAttributeDefinition;
-import uk.gov.hmcts.reform.wataskmanagementapi.controllers.request.enums.TaskOperationName;
 import uk.gov.hmcts.reform.wataskmanagementapi.controllers.request.options.CompletionOptions;
 import uk.gov.hmcts.reform.wataskmanagementapi.controllers.request.options.TerminateInfo;
 import uk.gov.hmcts.reform.wataskmanagementapi.controllers.response.GetTasksCompletableResponse;
@@ -33,12 +32,14 @@ import uk.gov.hmcts.reform.wataskmanagementapi.domain.entities.camunda.CamundaVa
 import uk.gov.hmcts.reform.wataskmanagementapi.domain.entities.camunda.TaskState;
 import uk.gov.hmcts.reform.wataskmanagementapi.domain.entities.task.Task;
 import uk.gov.hmcts.reform.wataskmanagementapi.domain.entities.task.TaskRolePermissions;
+import uk.gov.hmcts.reform.wataskmanagementapi.exceptions.ConflictException;
 import uk.gov.hmcts.reform.wataskmanagementapi.exceptions.ResourceNotFoundException;
 import uk.gov.hmcts.reform.wataskmanagementapi.exceptions.TaskStateIncorrectException;
 import uk.gov.hmcts.reform.wataskmanagementapi.exceptions.v2.DatabaseConflictException;
 import uk.gov.hmcts.reform.wataskmanagementapi.exceptions.v2.GenericServerErrorException;
 import uk.gov.hmcts.reform.wataskmanagementapi.exceptions.v2.InvalidRequestException;
 import uk.gov.hmcts.reform.wataskmanagementapi.exceptions.v2.RoleAssignmentVerificationException;
+import uk.gov.hmcts.reform.wataskmanagementapi.exceptions.v2.TaskCancelException;
 import uk.gov.hmcts.reform.wataskmanagementapi.exceptions.v2.TaskNotFoundException;
 import uk.gov.hmcts.reform.wataskmanagementapi.exceptions.v2.enums.ErrorMessages;
 import uk.gov.hmcts.reform.wataskmanagementapi.exceptions.v2.validation.CustomConstraintViolationException;
@@ -95,7 +96,7 @@ public class TaskManagementService {
     private final LaunchDarklyFeatureFlagProvider launchDarklyFeatureFlagProvider;
     private final ConfigureTaskService configureTaskService;
     private final TaskAutoAssignmentService taskAutoAssignmentService;
-    private final TaskReconfigurationService taskReconfigurationService;
+    private final List<TaskOperationService> taskOperationServices;
     private final RoleAssignmentVerificationService roleAssignmentVerification;
 
     @PersistenceContext
@@ -112,7 +113,7 @@ public class TaskManagementService {
                                  ConfigureTaskService configureTaskService,
                                  TaskAutoAssignmentService taskAutoAssignmentService,
                                  RoleAssignmentVerificationService roleAssignmentVerification,
-                                 TaskReconfigurationService taskReconfigurationService,
+                                 List<TaskOperationService> taskOperationServices,
                                  EntityManager entityManager,
                                  AllowedJurisdictionConfiguration allowedJurisdictionConfiguration) {
         this.camundaService = camundaService;
@@ -122,7 +123,7 @@ public class TaskManagementService {
         this.launchDarklyFeatureFlagProvider = launchDarklyFeatureFlagProvider;
         this.configureTaskService = configureTaskService;
         this.taskAutoAssignmentService = taskAutoAssignmentService;
-        this.taskReconfigurationService = taskReconfigurationService;
+        this.taskOperationServices = taskOperationServices;
         this.roleAssignmentVerification = roleAssignmentVerification;
         this.entityManager = entityManager;
         this.allowedJurisdictionConfiguration = allowedJurisdictionConfiguration;
@@ -176,14 +177,14 @@ public class TaskManagementService {
     @Transactional
     public void claimTask(String taskId,
                           AccessControlResponse accessControlResponse) {
-        requireNonNull(accessControlResponse.getUserInfo().getUid(), USER_ID_CANNOT_BE_NULL);
+        String userId = accessControlResponse.getUserInfo().getUid();
+        requireNonNull(userId, USER_ID_CANNOT_BE_NULL);
         List<PermissionTypes> permissionsRequired = asList(OWN, EXECUTE);
 
         final boolean isFeatureEnabled = launchDarklyFeatureFlagProvider
             .getBooleanValue(
                 FeatureFlag.RELEASE_2_ENDPOINTS_FEATURE,
-                accessControlResponse.getUserInfo().getUid(),
-                accessControlResponse.getUserInfo().getEmail()
+                userId, accessControlResponse.getUserInfo().getEmail()
             );
         if (isFeatureEnabled) {
             roleAssignmentVerification.verifyRoleAssignments(
@@ -191,12 +192,18 @@ public class TaskManagementService {
             );
             //Lock & update Task
             TaskResource task = findByIdAndObtainLock(taskId);
+            if (task.getState() == CFTTaskState.ASSIGNED && !task.getAssignee().equals(userId)) {
+                throw new ConflictException("Task '" + task.getTaskId()
+                    + "' is already claimed by someone else.", null);
+            }
             task.setState(CFTTaskState.ASSIGNED);
-            task.setAssignee(accessControlResponse.getUserInfo().getUid());
-            //Perform Camunda updates
-            camundaService.claimTask(taskId, accessControlResponse.getUserInfo().getUid());
+            task.setAssignee(userId);
+
+            camundaService.assignTask(taskId, userId, false);
+
             //Commit transaction
             cftTaskDatabaseService.saveTask(task);
+
         } else {
             Map<String, CamundaVariable> variables = camundaService.getTaskVariables(taskId);
             roleAssignmentVerification.verifyRoleAssignments(
@@ -371,11 +378,41 @@ public class TaskManagementService {
         if (isRelease2EndpointsFeatureEnabled) {
             //Lock & update Task
             TaskResource task = findByIdAndObtainLock(taskId);
+            CFTTaskState previousTaskState = task.getState();
             task.setState(CFTTaskState.CANCELLED);
-            //Perform Camunda updates
-            camundaService.cancelTask(taskId);
-            //Commit transaction
-            cftTaskDatabaseService.saveTask(task);
+
+            boolean isCftTaskStateExist = camundaService.isCftTaskStateExistInCamunda(taskId);
+
+            log.info("{} previousTaskState : {} - isCftTaskStateExist : {}",
+                taskId, previousTaskState, isCftTaskStateExist);
+
+            try {
+                //Perform Camunda updates
+                camundaService.cancelTask(taskId);
+                log.info("{} cancelled in camunda", taskId);
+                //Commit transaction
+                cftTaskDatabaseService.saveTask(task);
+                log.info("{} cancelled in CFT", taskId);
+            } catch (TaskCancelException ex) {
+                if (isCftTaskStateExist) {
+                    log.info("{} TaskCancelException occurred due to cftTaskState exists in Camunda.Exception: {}",
+                        taskId, ex.getMessage());
+                    throw ex;
+                }
+
+                if (!CFTTaskState.TERMINATED.equals(previousTaskState)) {
+                    task.setState(CFTTaskState.TERMINATED);
+                    cftTaskDatabaseService.saveTask(task);
+                    log.info("{} setting CFTTaskState to TERMINATED. previousTaskState : {} ",
+                        taskId, previousTaskState);
+                    return;
+                }
+
+                log.info("{} Camunda Task appears to be Terminated but could not update the CFT Task state. "
+                         + "CurrentCFTTaskState: {} Exception: {}", taskId, previousTaskState, ex.getMessage());
+                throw ex;
+            }
+
         } else {
             camundaService.cancelTask(taskId);
         }
@@ -567,7 +604,6 @@ public class TaskManagementService {
      *
      * @param searchEventAndCase    the search request.
      * @param accessControlResponse the access control response containing user id and role assignments.
-     * @return
      */
     @SuppressWarnings({"PMD.CyclomaticComplexity"})
     public GetTasksCompletableResponse<Task> searchForCompletableTasks(SearchEventAndCase searchEventAndCase,
@@ -654,15 +690,27 @@ public class TaskManagementService {
      */
     @Transactional
     public void terminateTask(String taskId, TerminateInfo terminateInfo) {
-        //Find and Lock Task
-        TaskResource task = findByIdAndObtainLock(taskId);
-        //Update cft task and terminate reason
-        task.setState(CFTTaskState.TERMINATED);
-        task.setTerminationReason(terminateInfo.getTerminateReason());
-        //Perform Camunda updates
-        camundaService.deleteCftTaskState(taskId);
-        //Commit transaction
-        cftTaskDatabaseService.saveTask(task);
+        TaskResource task = null;
+        try {
+            //Find and Lock Task
+            task = findByIdAndObtainLock(taskId);
+        } catch (ResourceNotFoundException e) {
+            //Perform Camunda updates
+            log.warn("Task for id {} not found in the database, trying delete the task in camunda if exist", taskId);
+            camundaService.deleteCftTaskState(taskId);
+            return;
+        }
+
+        //Terminate the task if found in the database
+        if (task != null) {
+            //Update cft task and terminate reason
+            task.setState(CFTTaskState.TERMINATED);
+            task.setTerminationReason(terminateInfo.getTerminateReason());
+            //Perform Camunda updates
+            camundaService.deleteCftTaskState(taskId);
+            //Commit transaction
+            cftTaskDatabaseService.saveTask(task);
+        }
     }
 
     /**
@@ -752,11 +800,10 @@ public class TaskManagementService {
     }
 
     public List<TaskResource> performOperation(TaskOperationRequest taskOperationRequest) {
-
-        if (taskOperationRequest.getOperation().getName().equals(TaskOperationName.MARK_TO_RECONFIGURE)) {
-            return taskReconfigurationService.markTasksToReconfigure(taskOperationRequest.getTaskFilter());
-        }
-        return List.of();
+        return taskOperationServices.stream()
+            .flatMap(taskOperationService -> taskOperationService.performOperation(taskOperationRequest).stream())
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
     }
 
     /**

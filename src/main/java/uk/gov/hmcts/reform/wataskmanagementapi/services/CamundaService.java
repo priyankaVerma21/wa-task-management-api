@@ -36,6 +36,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import static java.util.Collections.emptyList;
@@ -104,12 +105,48 @@ public class CamundaService {
         return performGetVariablesAction(taskId);
     }
 
+    public boolean isCftTaskStateExistInCamunda(String taskId) {
+        Map<String, Object> body = Map.of(
+            "variableName", CFT_TASK_STATE.value(),
+            "taskIdIn", singleton(taskId)
+        );
+
+        AtomicBoolean isCftTaskStateExist = new AtomicBoolean(false);
+
+        try {
+            //Check if the task has already been deleted or pending termination
+            List<HistoryVariableInstance> result = camundaServiceApi.searchHistory(authTokenGenerator.generate(), body);
+
+            if (result == null || result.isEmpty()) {
+                return isCftTaskStateExist.get();
+            }
+
+            Optional<HistoryVariableInstance> historyVariableInstance = result.stream()
+                .filter(r -> r.getName().equals(CFT_TASK_STATE.value()))
+                .findFirst();
+
+            historyVariableInstance.ifPresent(variable -> {
+                log.info("{} cftTaskStateInCamundaHistory: {}", taskId, variable.getValue());
+                isCftTaskStateExist.set(true);
+            });
+
+            return isCftTaskStateExist.get();
+
+        } catch (FeignException ex) {
+            throw new TaskCancelException(TASK_CANCEL_UNABLE_TO_CANCEL);
+        }
+
+    }
+
     public void cancelTask(String taskId) {
+
+        //Task has not been canceled by dmn, perform the delete action
         try {
             performCancelTaskAction(taskId);
         } catch (CamundaTaskCancelException ex) {
             throw new TaskCancelException(TASK_CANCEL_UNABLE_TO_CANCEL);
         }
+
     }
 
     public void claimTask(String taskId, String userId) {
@@ -527,7 +564,7 @@ public class CamundaService {
 
     private boolean filterOnlyHasWarningVarAndLocalTaskVars(CamundaVariableInstance camundaVariableInstance) {
         if (("hasWarnings".equals(camundaVariableInstance.getName())
-            || "warningList".equals(camundaVariableInstance.getName()))
+             || "warningList".equals(camundaVariableInstance.getName()))
             && camundaVariableInstance.getTaskId() == null) {
             return true;
         }

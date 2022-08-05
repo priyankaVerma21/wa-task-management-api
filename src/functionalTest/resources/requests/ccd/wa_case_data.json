@@ -3,5 +3,8 @@
   "caseAccessCategory": "categoryA,categoryC",
   "appellantGivenNames": "Bob",
   "appellantFamilyName": "Smith",
-  "appealType": "protection"
+  "appealType": "protection",
+  "nextHearingId": "next-hearing-id",
+  "nextHearingDate": "{NEXT_HEARING_DATE}",
+  "urgent": "Yes"
 }
