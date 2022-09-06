@@ -10,7 +10,6 @@ import uk.gov.hmcts.reform.wataskmanagementapi.controllers.request.entities.Exec
 import uk.gov.hmcts.reform.wataskmanagementapi.controllers.request.entities.TaskFilter;
 import uk.gov.hmcts.reform.wataskmanagementapi.controllers.request.enums.TaskOperationName;
 import uk.gov.hmcts.reform.wataskmanagementapi.exceptions.v2.TaskExecuteReconfigurationException;
-import uk.gov.hmcts.reform.wataskmanagementapi.taskconfiguration.domain.entities.configuration.TaskToConfigure;
 import uk.gov.hmcts.reform.wataskmanagementapi.taskconfiguration.services.ConfigureTaskService;
 import uk.gov.hmcts.reform.wataskmanagementapi.taskconfiguration.services.TaskAutoAssignmentService;
 
@@ -113,7 +112,6 @@ public class ExecuteTaskReconfigurationService implements TaskOperationService {
     private List<String> reconfigureTasks(List<String> taskIds, List<TaskResource> successfulTaskResources,
                                           OffsetDateTime endTimer) {
         List<String> failedTaskIds = new ArrayList<>();
-
         if (endTimer.isAfter(OffsetDateTime.now())) {
             taskIds.stream()
                 .forEach(taskId -> {
@@ -124,13 +122,14 @@ public class ExecuteTaskReconfigurationService implements TaskOperationService {
 
                         if (optionalTaskResource.isPresent()) {
                             TaskResource taskResource = optionalTaskResource.get();
-                            taskResource = configureTask(taskResource);
+                            taskResource = configureTaskService.reconfigureCFTTask(taskResource);
                             taskResource = taskAutoAssignmentService.reAutoAssignCFTTask(taskResource);
                             taskResource.setReconfigureRequestTime(null);
                             taskResource.setLastReconfigurationTime(OffsetDateTime.now());
                             successfulTaskResources.add(cftTaskDatabaseService.saveTask(taskResource));
                         }
                     } catch (Exception e) {
+                        log.error("Error configuring task (id={}) ", taskId, e);
                         failedTaskIds.add(taskId);
                     }
                 });
@@ -146,20 +145,6 @@ public class ExecuteTaskReconfigurationService implements TaskOperationService {
             .findFirst()
             .map(filter -> ((ExecuteReconfigureTaskFilter) filter).getValues())
             .orElseGet(() -> null);
-    }
-
-    private TaskResource configureTask(TaskResource taskResource) {
-        TaskToConfigure taskToConfigure = new TaskToConfigure(
-            taskResource.getTaskId(),
-            taskResource.getTaskType(),
-            taskResource.getCaseId(),
-            taskResource.getTaskName()
-        );
-
-        return configureTaskService.configureCFTTask(
-            taskResource,
-            taskToConfigure
-        );
     }
 
 }
