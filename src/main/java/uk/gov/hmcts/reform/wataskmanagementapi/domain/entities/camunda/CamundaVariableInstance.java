@@ -14,6 +14,7 @@ public class CamundaVariableInstance {
     private String name;
     private String processInstanceId;
     private String taskId;
+    private String created;
 
     private CamundaVariableInstance() {
         //Hidden constructor
@@ -23,12 +24,13 @@ public class CamundaVariableInstance {
                                    String type,
                                    String name,
                                    String processInstanceId,
-                                   String taskId) {
+                                   String taskId, String created) {
         this.value = value;
         this.type = type;
         this.name = name;
         this.processInstanceId = processInstanceId;
         this.taskId = taskId;
+        this.created = created;
     }
 
     public Object getValue() {
@@ -49,5 +51,9 @@ public class CamundaVariableInstance {
 
     public String getTaskId() {
         return taskId;
+    }
+
+    public String getCreated() {
+        return created;
     }
 }

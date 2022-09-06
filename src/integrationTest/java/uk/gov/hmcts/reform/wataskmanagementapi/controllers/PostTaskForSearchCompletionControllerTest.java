@@ -386,36 +386,36 @@ class PostTaskForSearchCompletionControllerTest extends SpringBootIntegrationBas
                 "String",
                 "jurisdiction",
                 processInstanceId,
-                taskId
-            ),
+                taskId,
+                null),
             new CamundaVariableInstance(
                 "PUBLIC",
                 "String",
                 "securityClassification",
                 processInstanceId,
-                taskId
-            ),
+                taskId,
+                null),
             new CamundaVariableInstance(
                 "Read,Refer,Own,Manager,Cancel",
                 "String",
                 "tribunal-caseworker",
                 processInstanceId,
-                taskId
-            ),
+                taskId,
+                null),
             new CamundaVariableInstance(
                 "caseId1",
                 "String",
                 "caseId",
                 processInstanceId,
-                taskId
-            ),
+                taskId,
+                null),
             new CamundaVariableInstance(
                 "aDescription",
                 "String",
                 "description",
                 processInstanceId,
-                taskId
-            )
+                taskId,
+                null)
         );
 
     }

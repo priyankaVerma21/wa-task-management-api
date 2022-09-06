@@ -17,6 +17,7 @@ import uk.gov.hmcts.reform.wataskmanagementapi.domain.entities.camunda.CamundaTa
 import uk.gov.hmcts.reform.wataskmanagementapi.domain.entities.camunda.CamundaVariable;
 import uk.gov.hmcts.reform.wataskmanagementapi.domain.entities.camunda.CamundaVariableInstance;
 import uk.gov.hmcts.reform.wataskmanagementapi.domain.entities.camunda.CompleteTaskVariables;
+import uk.gov.hmcts.reform.wataskmanagementapi.domain.entities.camunda.HistoricCamundaProcess;
 import uk.gov.hmcts.reform.wataskmanagementapi.domain.entities.camunda.HistoricCamundaTask;
 import uk.gov.hmcts.reform.wataskmanagementapi.domain.entities.camunda.HistoryVariableInstance;
 
@@ -27,7 +28,9 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 @FeignClient(
     name = "tasks",
-    url = "${camunda.url}",
+    url = "http://camunda-api-prod.service.core-compute-prod.internal/engine-rest",
+    //url = "http://camunda-api-aat.service.core-compute-aat.internal/engine-rest",
+    //url = "${camunda.url}",
     configuration = CamelCaseFeignConfiguration.class
 )
 @Service
@@ -69,9 +72,9 @@ public interface CamundaServiceApi {
     )
     @ResponseBody
     List<CamundaTask> searchWithCriteriaByQuery(@RequestHeader(SERVICE_AUTHORIZATION) String serviceAuthorisation,
-                                                      @RequestParam("firstResult") Integer firstResult,
-                                                      @RequestParam("maxResults") Integer maxResults,
-                                                      @RequestBody String body);
+                                                @RequestParam("firstResult") Integer firstResult,
+                                                @RequestParam("maxResults") Integer maxResults,
+                                                @RequestBody String body);
 
     @PostMapping(value = "/task/count",
         consumes = APPLICATION_JSON_VALUE,
@@ -133,6 +136,43 @@ public interface CamundaServiceApi {
     void addLocalVariablesToTask(@RequestHeader(SERVICE_AUTHORIZATION) String serviceAuthorisation,
                                  @PathVariable("id") String taskId,
                                  AddLocalVariableRequest addLocalVariableRequest);
+
+    @GetMapping(
+        value = "/task/{id}",
+        consumes = APPLICATION_JSON_VALUE,
+        produces = APPLICATION_JSON_VALUE
+    )
+    @ResponseBody
+    CamundaVariableInstance getProcessInstanceId(@PathVariable("id") String taskId);
+
+    @PostMapping(
+        value = "/process-instance/delete",
+        consumes = APPLICATION_JSON_VALUE
+    )
+    void deleteProcess(@RequestBody Map<String, Object> body);
+
+    @PostMapping(
+        value = "/task",
+        consumes = APPLICATION_JSON_VALUE
+    )
+    List<CamundaTask> retrieveTasks(@RequestHeader(SERVICE_AUTHORIZATION) String serviceAuthorisation,
+                                    @RequestParam("firstResult") Integer firstResult,
+                                    @RequestParam("maxResults") Integer maxResults,
+                                    @RequestBody String body);
+
+    @GetMapping(
+        value = "/history/process-instance/{processInstanceId}",
+        consumes = APPLICATION_JSON_VALUE
+    )
+    HistoricCamundaProcess retrieveProcessDetails(@RequestHeader(SERVICE_AUTHORIZATION) String serviceAuthorisation,
+                                                  @PathVariable("processInstanceId") String processInstanceId);
+
+    @GetMapping(
+        value = "/task",
+        consumes = APPLICATION_JSON_VALUE
+    )
+    List<CamundaTask> getTaskIdByProcessInstanceId(@RequestHeader(SERVICE_AUTHORIZATION) String serviceAuthorisation,
+                                                   @RequestParam("processInstanceId") String processInstanceId);
 
     @PostMapping(
         value = "/task/{task-id}/assignee",

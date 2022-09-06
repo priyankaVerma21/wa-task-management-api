@@ -206,8 +206,8 @@ public class CamundaHelpers {
                         mockVariables.get(mockVarKey).getType(),
                         mockVarKey,
                         processInstanceId,
-                        taskId
-                    ))
+                        taskId,
+                        null))
             .collect(Collectors.toList());
 
     }
@@ -224,8 +224,8 @@ public class CamundaHelpers {
                         mockVariables.get(mockVarKey).getType(),
                         mockVarKey,
                         processInstanceId,
-                        taskId
-                    ))
+                        taskId,
+                        null))
             .collect(Collectors.toList());
 
     }
