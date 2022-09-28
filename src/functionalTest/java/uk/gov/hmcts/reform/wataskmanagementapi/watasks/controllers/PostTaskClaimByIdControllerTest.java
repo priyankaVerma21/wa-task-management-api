@@ -76,6 +76,7 @@ public class PostTaskClaimByIdControllerTest extends SpringBootFunctionalBaseTes
     }
 
     @Test
+    //TODO Covered in CftQueryServiceClaimTaskTest.should_retrieve_a_task_to_claim
     public void user_should_claim_task_when_grant_type_specific_and_permission_own() {
 
         TestVariables taskVariables = common.setupWATaskAndRetrieveIds("requests/ccd/wa_case_data.json",
@@ -100,6 +101,7 @@ public class PostTaskClaimByIdControllerTest extends SpringBootFunctionalBaseTes
     }
 
     @Test
+    //TODO Covered in CftQueryServiceClaimTaskTest.should_retrieve_a_task_to_claim
     public void user_should_claim_task_when_grant_type_specific_and_permission_execute() {
 
         TestVariables taskVariables = common.setupWATaskAndRetrieveIds("requests/ccd/wa_case_data.json",
@@ -183,6 +185,7 @@ public class PostTaskClaimByIdControllerTest extends SpringBootFunctionalBaseTes
     }
 
     @Test
+    //TODO Covered in CftQueryServiceClaimTaskTest.should_retrieve_a_task_to_claim
     public void user_should_claim_task_when_grant_type_specific_and_permissions_own_manage() {
 
         TestVariables taskVariables = common.setupWATaskAndRetrieveIds("requests/ccd/wa_case_data.json",
@@ -209,11 +212,11 @@ public class PostTaskClaimByIdControllerTest extends SpringBootFunctionalBaseTes
     }
 
     @Test
+    //TODO Covered with  CftQueryServiceClaimTaskTest.should_retrieve_a_task_when_grant_type_specific
     public void user_should_claim_task_when_grant_type_specific_and_permissions_execute_manage() {
 
         TestVariables taskVariables = common.setupWATaskAndRetrieveIds("requests/ccd/wa_case_data.json",
                                                                        "reviewSpecificAccessRequestJudiciary");
-
         common.setupFtpaJudgeForSpecificAccess(caseworkerCredentials.getHeaders(), taskVariables.getCaseId(),
                                                WA_JURISDICTION, WA_CASE_TYPE);
         common.setupCFTJudicialOrganisationalRoleAssignment(caseworkerForReadCredentials.getHeaders(),
@@ -264,6 +267,7 @@ public class PostTaskClaimByIdControllerTest extends SpringBootFunctionalBaseTes
     }
 
     @Test
+    //TODO Could be an integration test
     public void user_should_claim_task_when_grant_type_specific_and_permissions_execute_read_manage_own_cancel() {
 
         TestVariables taskVariables = common.setupWATaskAndRetrieveIds("requests/ccd/wa_case_data.json",
