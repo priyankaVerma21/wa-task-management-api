@@ -12,10 +12,10 @@ import uk.gov.hmcts.reform.wataskmanagementapi.auth.role.entities.enums.Classifi
 import uk.gov.hmcts.reform.wataskmanagementapi.auth.role.entities.enums.GrantType;
 import uk.gov.hmcts.reform.wataskmanagementapi.auth.role.entities.enums.RoleCategory;
 import uk.gov.hmcts.reform.wataskmanagementapi.auth.role.entities.enums.RoleType;
+import uk.gov.hmcts.reform.wataskmanagementapi.controllers.response.GetTaskTypesResponse;
 import uk.gov.hmcts.reform.wataskmanagementapi.domain.entities.camunda.CamundaValue;
 import uk.gov.hmcts.reform.wataskmanagementapi.domain.entities.camunda.TaskTypesDmnEvaluationResponse;
 import uk.gov.hmcts.reform.wataskmanagementapi.domain.entities.camunda.TaskTypesDmnResponse;
-import uk.gov.hmcts.reform.wataskmanagementapi.domain.entities.tasktype.TaskTypeResponse;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,9 +27,9 @@ import java.util.UUID;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -46,7 +46,6 @@ class TaskTypesServiceTest {
         );
     }
 
-
     @Test
     void should_return_task_types() {
         //given
@@ -57,7 +56,7 @@ class TaskTypesServiceTest {
         );
         Set<TaskTypesDmnResponse> taskTypesDmnResponses = Set.of(taskTypesDmnResponse);
 
-        when(dmnEvaluationService.getTaskTypesDmn("wa", "Task Types DMN"))
+        when(dmnEvaluationService.retrieveTaskTypesDmn("wa", "Task Types DMN"))
             .thenReturn(taskTypesDmnResponses);
 
 
@@ -78,15 +77,102 @@ class TaskTypesServiceTest {
         AccessControlResponse accessControlResponse = new AccessControlResponse(null, allTestRoles);
 
         //when
-        List<TaskTypeResponse> response = taskTypesService.getTaskTypes(accessControlResponse, "wa");
+        GetTaskTypesResponse response = taskTypesService.getTaskTypes(accessControlResponse, "wa");
 
         //then
         assertNotNull(response);
+        assertNotNull(response.getTaskTypeResponses());
+        assertEquals(1, response.getTaskTypeResponses().size());
+        assertEquals("processApplication", response.getTaskTypeResponses().get(0).getTaskType().getTaskTypeId());
+        assertEquals("Process Application", response.getTaskTypeResponses().get(0).getTaskType().getTaskTypeName());
 
-        assertEquals(1, response.size());
-        assertEquals("processApplication", response.get(0).getTaskType().getTaskTypeId());
-        assertEquals("Process Application", response.get(0).getTaskType().getTaskTypeName());
+    }
 
+    @Test
+    void should_return_all_task_types_with_first_record_and_without_duplicate() {
+
+        //given
+        TaskTypesDmnResponse taskTypesDmnResponse = new TaskTypesDmnResponse(
+            "wa-task-types-wa-wacasetype",
+            "wa",
+            "wa-task-types-wa-wacasetype.dmn"
+        );
+        Set<TaskTypesDmnResponse> taskTypesDmnResponses = Set.of(taskTypesDmnResponse);
+
+        when(dmnEvaluationService.retrieveTaskTypesDmn("wa", "Task Types DMN"))
+            .thenReturn(taskTypesDmnResponses);
+
+
+        List<TaskTypesDmnEvaluationResponse> taskTypesDmnEvaluationResponses = new ArrayList<>();
+        //first record
+        CamundaValue<String> taskTypeId = new CamundaValue<>("processApplication", "String");
+        CamundaValue<String> taskTypeName = new CamundaValue<>("Process Application", "String");
+
+        TaskTypesDmnEvaluationResponse taskTypesDmnEvaluationResponse = new TaskTypesDmnEvaluationResponse(
+            taskTypeId, taskTypeName
+        );
+        taskTypesDmnEvaluationResponses.add(taskTypesDmnEvaluationResponse);
+
+        //second record
+        taskTypeId = new CamundaValue<>("reviewAppealSkeletonArgument", "String");
+        taskTypeName = new CamundaValue<>("Review Appeal Skeleton Argument", "String");
+
+        taskTypesDmnEvaluationResponse = new TaskTypesDmnEvaluationResponse(
+            taskTypeId, taskTypeName
+        );
+        taskTypesDmnEvaluationResponses.add(taskTypesDmnEvaluationResponse);
+
+        //third record (duplicate-with different taskTypeName)
+        taskTypeId = new CamundaValue<>("processApplication", "String");
+        taskTypeName = new CamundaValue<>("Process Application-2", "String");
+
+        taskTypesDmnEvaluationResponse = new TaskTypesDmnEvaluationResponse(
+            taskTypeId, taskTypeName
+        );
+        taskTypesDmnEvaluationResponses.add(taskTypesDmnEvaluationResponse);
+
+        //fourth record (duplicate)
+        taskTypeId = new CamundaValue<>("processApplication", "String");
+        taskTypeName = new CamundaValue<>("Process Application", "String");
+
+        taskTypesDmnEvaluationResponse = new TaskTypesDmnEvaluationResponse(
+            taskTypeId, taskTypeName
+        );
+        taskTypesDmnEvaluationResponses.add(taskTypesDmnEvaluationResponse);
+
+        //fifth record (duplicate-with upperCase taskTypeId)
+        taskTypeId = new CamundaValue<>("PROCESSAPPLICATION", "String");
+        taskTypeName = new CamundaValue<>("Process Application", "String");
+
+        taskTypesDmnEvaluationResponse = new TaskTypesDmnEvaluationResponse(
+            taskTypeId, taskTypeName
+        );
+        taskTypesDmnEvaluationResponses.add(taskTypesDmnEvaluationResponse);
+
+        when(dmnEvaluationService.evaluateTaskTypesDmn("wa", "wa-task-types-wa-wacasetype"))
+            .thenReturn(taskTypesDmnEvaluationResponses);
+
+        final List<String> roleNames = singletonList("tribunal-caseworker");
+
+        Map<String, String> roleAttributes = new HashMap<>();
+        List<RoleAssignment> allTestRoles = createTestRoleAssignmentsWithRoleAttributes(roleNames, roleAttributes);
+        AccessControlResponse accessControlResponse = new AccessControlResponse(null, allTestRoles);
+
+        //when
+        GetTaskTypesResponse response = taskTypesService.getTaskTypes(accessControlResponse, "wa");
+
+        //then
+        assertNotNull(response);
+        assertNotNull(response.getTaskTypeResponses());
+        assertEquals(2, response.getTaskTypeResponses().size());
+        assertEquals("processApplication",
+            response.getTaskTypeResponses().get(0).getTaskType().getTaskTypeId());
+        assertEquals("Process Application",
+            response.getTaskTypeResponses().get(0).getTaskType().getTaskTypeName());
+        assertEquals("reviewAppealSkeletonArgument",
+            response.getTaskTypeResponses().get(1).getTaskType().getTaskTypeId());
+        assertEquals("Review Appeal Skeleton Argument",
+            response.getTaskTypeResponses().get(1).getTaskType().getTaskTypeName());
     }
 
     @Test
@@ -96,10 +182,11 @@ class TaskTypesServiceTest {
         AccessControlResponse accessControlResponse = new AccessControlResponse(null, roleAssignments);
 
         //when
-        List<TaskTypeResponse> response = taskTypesService.getTaskTypes(accessControlResponse, "wa");
+        GetTaskTypesResponse response = taskTypesService.getTaskTypes(accessControlResponse, "wa");
 
         //then
-        assertThat(response).isEmpty();
+        assertNotNull(response);
+        assertNull(response.getTaskTypeResponses());
     }
 
     private List<RoleAssignment> createTestRoleAssignmentsWithRoleAttributes(List<String> roleNames,
