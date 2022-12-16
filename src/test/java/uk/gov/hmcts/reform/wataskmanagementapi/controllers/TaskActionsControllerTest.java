@@ -30,6 +30,7 @@ import uk.gov.hmcts.reform.wataskmanagementapi.exceptions.NoRoleAssignmentsFound
 import uk.gov.hmcts.reform.wataskmanagementapi.exceptions.v2.GenericForbiddenException;
 import uk.gov.hmcts.reform.wataskmanagementapi.exceptions.v2.TaskNotFoundException;
 import uk.gov.hmcts.reform.wataskmanagementapi.services.SystemDateProvider;
+import uk.gov.hmcts.reform.wataskmanagementapi.services.TaskDeletionService;
 import uk.gov.hmcts.reform.wataskmanagementapi.services.TaskManagementService;
 
 import java.time.ZonedDateTime;
@@ -80,6 +81,9 @@ class TaskActionsControllerTest {
     @Mock
     private LaunchDarklyFeatureFlagProvider launchDarklyFeatureFlagProvider;
 
+    @Mock
+    private TaskDeletionService taskDeletionService;
+
     private TaskActionsController taskActionsController;
     private String taskId;
 
@@ -91,7 +95,8 @@ class TaskActionsControllerTest {
             accessControlService,
             systemDateProvider,
             clientAccessControlService,
-            launchDarklyFeatureFlagProvider
+            launchDarklyFeatureFlagProvider,
+            taskDeletionService
         );
 
     }

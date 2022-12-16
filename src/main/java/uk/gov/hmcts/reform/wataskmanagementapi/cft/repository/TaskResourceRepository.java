@@ -11,6 +11,7 @@ import org.springframework.lang.NonNull;
 import org.springframework.transaction.annotation.Transactional;
 import uk.gov.hmcts.reform.wataskmanagementapi.cft.entities.TaskResource;
 import uk.gov.hmcts.reform.wataskmanagementapi.cft.enums.CFTTaskState;
+import uk.gov.hmcts.reform.wataskmanagementapi.cft.query.TaskResourceCaseQueryBuilder;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -31,6 +32,10 @@ public interface TaskResourceRepository extends CrudRepository<TaskResource, Str
     Optional<TaskResource> getByTaskId(String id);
 
     List<TaskResource> getByCaseId(String caseId);
+
+    @Query(value = "select c.task_id AS taskid, c.state AS state from {h-schema}tasks c where c.case_id=:caseId",
+            nativeQuery = true)
+    List<TaskResourceCaseQueryBuilder> getTaskIdsByCaseId(final @Param("caseId") String caseId);
 
     List<TaskResource> findByCaseIdInAndStateInAndReconfigureRequestTimeIsNull(
         List<String> caseIds, List<CFTTaskState> states);

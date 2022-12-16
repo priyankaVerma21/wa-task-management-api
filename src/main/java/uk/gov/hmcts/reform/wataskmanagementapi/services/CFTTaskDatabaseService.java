@@ -5,6 +5,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import uk.gov.hmcts.reform.wataskmanagementapi.cft.entities.TaskResource;
 import uk.gov.hmcts.reform.wataskmanagementapi.cft.enums.CFTTaskState;
+import uk.gov.hmcts.reform.wataskmanagementapi.cft.query.TaskResourceCaseQueryBuilder;
 import uk.gov.hmcts.reform.wataskmanagementapi.cft.repository.TaskResourceRepository;
 
 import java.sql.SQLException;
@@ -33,6 +34,10 @@ public class CFTTaskDatabaseService {
         return tasksRepository.getByCaseId(caseId);
     }
 
+    public List<TaskResourceCaseQueryBuilder> findByTaskIdsByCaseId(final String caseId) {
+        return tasksRepository.getTaskIdsByCaseId(caseId);
+    }
+
     public List<TaskResource> getActiveTasksByCaseIdsAndReconfigureRequestTimeIsNull(
         List<String> caseIds, List<CFTTaskState> states) {
         return tasksRepository.findByCaseIdInAndStateInAndReconfigureRequestTimeIsNull(caseIds, states);
@@ -55,6 +60,10 @@ public class CFTTaskDatabaseService {
             task.setPriorityDate(task.getDueDateTime());
         }
         return tasksRepository.save(task);
+    }
+
+    public void deleteTask(final String taskId) {
+        tasksRepository.deleteById(taskId);
     }
 
     public void insertAndLock(String taskId, OffsetDateTime dueDate) throws SQLException {

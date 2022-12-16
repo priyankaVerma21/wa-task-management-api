@@ -202,7 +202,7 @@ public class TaskManagementService {
         TaskResource task = findByIdAndObtainLock(taskId);
         if (task.getState() == CFTTaskState.ASSIGNED && !task.getAssignee().equals(userId)) {
             throw new ConflictException("Task '" + task.getTaskId()
-                                        + "' is already claimed by someone else.", null);
+                    + "' is already claimed by someone else.", null);
         }
         task.setState(CFTTaskState.ASSIGNED);
         task.setAssignee(userId);
@@ -455,7 +455,7 @@ public class TaskManagementService {
      * @param taskId                the task id.
      * @param accessControlResponse the access control response containing user id and role assignments.
      */
-    @Transactional
+
     public void cancelTask(String taskId,
                            AccessControlResponse accessControlResponse) {
         requireNonNull(accessControlResponse.getUserInfo().getUid(), USER_ID_CANNOT_BE_NULL);
@@ -484,6 +484,11 @@ public class TaskManagementService {
             throw new RoleAssignmentVerificationException(ROLE_ASSIGNMENT_VERIFICATIONS_FAILED);
         }
 
+        setTaskStateToCancelled(taskId);
+    }
+
+    @Transactional
+    protected void setTaskStateToCancelled(final String taskId) {
         //Lock & update Task
         TaskResource task = findByIdAndObtainLock(taskId);
         CFTTaskState previousTaskState = task.getState();

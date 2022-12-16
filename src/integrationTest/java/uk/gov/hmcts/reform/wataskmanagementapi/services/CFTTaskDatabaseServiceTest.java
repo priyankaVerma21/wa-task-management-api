@@ -5,16 +5,20 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import uk.gov.hmcts.reform.wataskmanagementapi.SpringBootIntegrationBaseTest;
 import uk.gov.hmcts.reform.wataskmanagementapi.cft.entities.TaskResource;
+import uk.gov.hmcts.reform.wataskmanagementapi.cft.query.TaskResourceCaseQueryBuilder;
 import uk.gov.hmcts.reform.wataskmanagementapi.cft.repository.TaskResourceRepository;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
+import static java.util.UUID.randomUUID;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static uk.gov.hmcts.reform.wataskmanagementapi.cft.enums.CFTTaskState.UNCONFIGURED;
+import static uk.gov.hmcts.reform.wataskmanagementapi.services.util.TaskResourceBuilder.getTaskResource;
 
 class CFTTaskDatabaseServiceTest extends SpringBootIntegrationBaseTest {
 
@@ -30,13 +34,13 @@ class CFTTaskDatabaseServiceTest extends SpringBootIntegrationBaseTest {
 
     @Test
     void should_succeed_and_save_task() {
-        String taskId = UUID.randomUUID().toString();
+        String taskId = randomUUID().toString();
         TaskResource taskResource = new TaskResource(
-            taskId,
-            "someTaskName",
-            "someTaskType",
-            UNCONFIGURED,
-            OffsetDateTime.parse("2022-05-09T20:15:45.345875+01:00")
+                taskId,
+                "someTaskName",
+                "someTaskType",
+                UNCONFIGURED,
+                OffsetDateTime.parse("2022-05-09T20:15:45.345875+01:00")
         );
         taskResource.setCreated(OffsetDateTime.now());
         TaskResource updatedTaskResource = cftTaskDatabaseService.saveTask(taskResource);
@@ -54,7 +58,7 @@ class CFTTaskDatabaseServiceTest extends SpringBootIntegrationBaseTest {
         TaskResource taskResource = createAndSaveTask();
 
         Optional<TaskResource> updatedTaskResource =
-            cftTaskDatabaseService.findByIdAndObtainPessimisticWriteLock(taskResource.getTaskId());
+                cftTaskDatabaseService.findByIdAndObtainPessimisticWriteLock(taskResource.getTaskId());
 
         assertNotNull(updatedTaskResource);
         assertTrue(updatedTaskResource.isPresent());
@@ -70,7 +74,7 @@ class CFTTaskDatabaseServiceTest extends SpringBootIntegrationBaseTest {
         TaskResource taskResource = createAndSaveTask();
 
         Optional<TaskResource> updatedTaskResource =
-            cftTaskDatabaseService.findByIdOnly(taskResource.getTaskId());
+                cftTaskDatabaseService.findByIdOnly(taskResource.getTaskId());
 
         assertNotNull(updatedTaskResource);
         assertTrue(updatedTaskResource.isPresent());
@@ -80,16 +84,46 @@ class CFTTaskDatabaseServiceTest extends SpringBootIntegrationBaseTest {
         assertEquals(UNCONFIGURED, updatedTaskResource.get().getState());
     }
 
+
+    @Test
+    void should_find_task_ids_by_case_id() {
+        final TaskResource taskResource = createAndSaveTask();
+
+        final List<TaskResourceCaseQueryBuilder> updatedTaskResource =
+                cftTaskDatabaseService.findByTaskIdsByCaseId(taskResource.getCaseId());
+
+        assertThat(updatedTaskResource.size()).isEqualTo(1);
+        assertEquals(taskResource.getTaskId(), updatedTaskResource.get(0).getTaskId());
+    }
+
+    @Test
+    void should_delete_tasks() {
+        final String caseId = randomUUID().toString();
+
+        final TaskResource taskResource1 = createAndSaveTask(caseId);
+        final TaskResource taskResource2 = createAndSaveTask(caseId);
+
+        final List<TaskResourceCaseQueryBuilder> updatedTaskResource =
+                cftTaskDatabaseService.findByTaskIdsByCaseId(caseId);
+
+        assertThat(updatedTaskResource.size()).isEqualTo(2);
+
+        cftTaskDatabaseService.deleteTask(taskResource1.getTaskId());
+        cftTaskDatabaseService.deleteTask(taskResource2.getTaskId());
+
+        final List<TaskResourceCaseQueryBuilder> tasksIdsAfterDeletion =
+                cftTaskDatabaseService.findByTaskIdsByCaseId(caseId);
+
+        assertThat(tasksIdsAfterDeletion.size()).isEqualTo(0);
+    }
+
     private TaskResource createAndSaveTask() {
-        TaskResource taskResource = new TaskResource(
-            UUID.randomUUID().toString(),
-            "someTaskName",
-            "someTaskType",
-            UNCONFIGURED,
-            OffsetDateTime.parse("2022-05-09T20:15:45.345875+01:00")
-        );
-        taskResource.setCreated(OffsetDateTime.now());
-        taskResource.setPriorityDate(OffsetDateTime.parse("2022-05-09T20:15:45.345875+01:00"));
+        final TaskResource taskResource = getTaskResource();
+        return taskResourceRepository.save(taskResource);
+    }
+
+    private TaskResource createAndSaveTask(final String caseId) {
+        final TaskResource taskResource = getTaskResource(caseId);
         return taskResourceRepository.save(taskResource);
     }
 

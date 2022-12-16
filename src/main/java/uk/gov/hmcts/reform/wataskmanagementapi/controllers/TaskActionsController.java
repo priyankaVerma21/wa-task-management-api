@@ -29,16 +29,20 @@ import uk.gov.hmcts.reform.wataskmanagementapi.config.features.FeatureFlag;
 import uk.gov.hmcts.reform.wataskmanagementapi.controllers.advice.ErrorMessage;
 import uk.gov.hmcts.reform.wataskmanagementapi.controllers.request.AssignTaskRequest;
 import uk.gov.hmcts.reform.wataskmanagementapi.controllers.request.CompleteTaskRequest;
+import uk.gov.hmcts.reform.wataskmanagementapi.controllers.request.DeleteTasksRequest;
 import uk.gov.hmcts.reform.wataskmanagementapi.controllers.request.NotesRequest;
+import uk.gov.hmcts.reform.wataskmanagementapi.controllers.response.DeleteTasksResponse;
 import uk.gov.hmcts.reform.wataskmanagementapi.controllers.response.GetTaskResponse;
 import uk.gov.hmcts.reform.wataskmanagementapi.controllers.response.GetTaskRolePermissionsResponse;
 import uk.gov.hmcts.reform.wataskmanagementapi.domain.entities.task.Task;
 import uk.gov.hmcts.reform.wataskmanagementapi.domain.entities.task.TaskRolePermissions;
 import uk.gov.hmcts.reform.wataskmanagementapi.exceptions.NoRoleAssignmentsFoundException;
 import uk.gov.hmcts.reform.wataskmanagementapi.exceptions.v2.GenericForbiddenException;
+import uk.gov.hmcts.reform.wataskmanagementapi.exceptions.v2.InvalidRequestException;
 import uk.gov.hmcts.reform.wataskmanagementapi.exceptions.v2.TaskNotFoundException;
 import uk.gov.hmcts.reform.wataskmanagementapi.exceptions.v2.enums.ErrorMessages;
 import uk.gov.hmcts.reform.wataskmanagementapi.services.SystemDateProvider;
+import uk.gov.hmcts.reform.wataskmanagementapi.services.TaskDeletionService;
 import uk.gov.hmcts.reform.wataskmanagementapi.services.TaskManagementService;
 
 import java.util.List;
@@ -51,10 +55,12 @@ import static org.springframework.http.ResponseEntity.status;
 import static uk.gov.hmcts.reform.wataskmanagementapi.config.SecurityConfiguration.AUTHORIZATION;
 import static uk.gov.hmcts.reform.wataskmanagementapi.config.SecurityConfiguration.SERVICE_AUTHORIZATION;
 import static uk.gov.hmcts.reform.wataskmanagementapi.exceptions.v2.enums.ErrorMessages.GENERIC_FORBIDDEN_ERROR;
+import static uk.gov.hmcts.reform.wataskmanagementapi.controllers.utils.InputParamsVerifier.verifyCaseId;
+import static uk.gov.hmcts.reform.wataskmanagementapi.services.utils.ResponseEntityBuilder.buildErrorResponseEntityAndLogError;
 
 @RequestMapping(path = "/task", consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
 @RestController
-@SuppressWarnings({"PMD.ExcessiveImports", "PMD.CyclomaticComplexity", "PMD.AvoidDuplicateLiterals"})
+@SuppressWarnings({"PMD.ExcessiveImports", "PMD.CyclomaticComplexity", "PMD.AvoidDuplicateLiterals","PMD.LawOfDemeter"})
 public class TaskActionsController extends BaseController {
     private static final Logger LOG = getLogger(TaskActionsController.class);
 
@@ -64,18 +70,22 @@ public class TaskActionsController extends BaseController {
     private final LaunchDarklyFeatureFlagProvider launchDarklyFeatureFlagProvider;
     private final SystemDateProvider systemDateProvider;
 
+    private final TaskDeletionService taskDeletionService;
+
     @Autowired
     public TaskActionsController(TaskManagementService taskManagementService,
                                  AccessControlService accessControlService,
                                  SystemDateProvider systemDateProvider,
                                  ClientAccessControlService clientAccessControlService,
-                                 LaunchDarklyFeatureFlagProvider launchDarklyFeatureFlagProvider) {
+                                 LaunchDarklyFeatureFlagProvider launchDarklyFeatureFlagProvider,
+                                 TaskDeletionService taskDeletionService) {
         super();
         this.taskManagementService = taskManagementService;
         this.accessControlService = accessControlService;
         this.systemDateProvider = systemDateProvider;
         this.clientAccessControlService = clientAccessControlService;
         this.launchDarklyFeatureFlagProvider = launchDarklyFeatureFlagProvider;
+        this.taskDeletionService = taskDeletionService;
     }
 
     @Operation(description = "Retrieve a Task Resource identified by its unique id.")
@@ -313,6 +323,42 @@ public class TaskActionsController extends BaseController {
             .ok()
             .cacheControl(CacheControl.noCache())
             .body(new GetTaskRolePermissionsResponse(taskRolePermissions));
+    }
+
+
+    @Operation(description = "Deletes all terminated tasks related to a case.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = OK, content = {@Content(mediaType = "application/json",
+                schema = @Schema(implementation = Object.class))}),
+        @ApiResponse(responseCode = "403", description = FORBIDDEN),
+        @ApiResponse(responseCode = "500", description = INTERNAL_SERVER_ERROR)
+    })
+    @PostMapping(path = "/delete")
+    public ResponseEntity<DeleteTasksResponse> deleteTasks(
+            @RequestBody final DeleteTasksRequest deleteTasksRequest,
+            @RequestHeader(SERVICE_AUTHORIZATION) String serviceAuthToken) {
+        try {
+            boolean hasAccess = clientAccessControlService.hasExclusiveAccess(serviceAuthToken);
+
+            if (!hasAccess) {
+                return buildErrorResponseEntityAndLogError(HttpStatus.FORBIDDEN.value(),
+                        new GenericForbiddenException(GENERIC_FORBIDDEN_ERROR));
+            }
+
+            verifyCaseId(deleteTasksRequest.getDeleteCaseTasksAction().getCaseId());
+
+            final DeleteTasksResponse deleteTasksResponse = taskDeletionService
+                    .deleteTasksByCaseId(deleteTasksRequest.getDeleteCaseTasksAction().getCaseId());
+
+            return ResponseEntity
+                    .ok()
+                    .cacheControl(CacheControl.noCache())
+                    .body(deleteTasksResponse);
+        } catch (final InvalidRequestException invalidRequestException) {
+            return buildErrorResponseEntityAndLogError(HttpStatus.BAD_REQUEST.value(), invalidRequestException);
+        } catch (final Exception exception) {
+            return buildErrorResponseEntityAndLogError(HttpStatus.INTERNAL_SERVER_ERROR.value(), exception);
+        }
     }
 
     @ExceptionHandler(NoRoleAssignmentsFoundException.class)

@@ -1,0 +1,63 @@
+package uk.gov.hmcts.reform.wataskmanagementapi.controllers.response;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+
+@EqualsAndHashCode
+@ToString
+@Builder
+@Schema(allowableValues = "CaseTasksDeletionResults")
+public class CaseTasksDeletionResults {
+
+    @Schema(
+            required = true,
+            description = "Total number of tasks for a case"
+    )
+    private int caseTasksFound;
+
+    @Schema(
+            required = true,
+            description = "Deleted case tasks"
+    )
+    private int deletedCaseTasks;
+
+    @Schema(
+            required = true,
+            description = "Cancelled case tasks"
+    )
+    private int cancelledCaseTasks;
+
+    @Schema(
+            required = true,
+            description = "Failed to delete case tasks"
+    )
+    private int failedCaseTasks;
+
+    public CaseTasksDeletionResults(final int caseTasksFound,
+                                    final int deletedCaseTasks,
+                                    final int cancelledCaseTasks,
+                                    final int failedCaseTasks) {
+        this.caseTasksFound = caseTasksFound;
+        this.deletedCaseTasks = deletedCaseTasks;
+        this.cancelledCaseTasks = cancelledCaseTasks;
+        this.failedCaseTasks = failedCaseTasks;
+    }
+
+    public int getCaseTasksFound() {
+        return caseTasksFound;
+    }
+
+    public int getDeletedCaseTasks() {
+        return deletedCaseTasks;
+    }
+
+    public int getCancelledCaseTasks() {
+        return cancelledCaseTasks;
+    }
+
+    public int getFailedCaseTasks() {
+        return failedCaseTasks;
+    }
+}

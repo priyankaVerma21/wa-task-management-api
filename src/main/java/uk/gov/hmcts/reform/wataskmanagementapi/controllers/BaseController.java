@@ -12,6 +12,7 @@ public abstract class BaseController {
     protected static final String UNSUPPORTED_MEDIA_TYPE = "Unsupported Media Type";
     protected static final String INTERNAL_SERVER_ERROR = "Internal Server Error";
     protected static final String TASK_ID = "task-id";
+    protected static final String CASE_ID = "case-id";
 
     protected BaseController() {
         //Only really want it called from a subclass
