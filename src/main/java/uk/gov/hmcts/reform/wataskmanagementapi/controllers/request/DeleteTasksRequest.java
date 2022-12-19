@@ -20,7 +20,7 @@ public class DeleteTasksRequest implements Serializable {
     private final DeleteCaseTasksAction deleteCaseTasksAction;
 
     @JsonCreator
-    public DeleteTasksRequest(DeleteCaseTasksAction deleteCaseTasksAction) {
+    public DeleteTasksRequest(final DeleteCaseTasksAction deleteCaseTasksAction) {
         this.deleteCaseTasksAction = deleteCaseTasksAction;
     }
 

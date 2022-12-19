@@ -70,11 +70,14 @@ public class DeleteTasksControllerTest extends SpringBootIntegrationBaseTest {
     @Test
     void shouldDeleteAndCancelTasks() throws Exception {
         final String caseId = "1615817621013640";
+
         final String taskId1 = UUID.randomUUID().toString();
         final String taskId2 = UUID.randomUUID().toString();
+        final String taskId3 = UUID.randomUUID().toString();
 
         insertDummyTaskInDb(taskId1, caseId, UNASSIGNED);
         insertDummyTaskInDb(taskId2, caseId, TERMINATED);
+        insertDummyTaskInDb(taskId3, caseId, UNASSIGNED);
 
         when(clientAccessControlService.hasExclusiveAccess(SERVICE_AUTHORIZATION_TOKEN))
                 .thenReturn(true);
@@ -87,9 +90,9 @@ public class DeleteTasksControllerTest extends SpringBootIntegrationBaseTest {
                                 .header(SERVICE_AUTHORIZATION, SERVICE_AUTHORIZATION_TOKEN)
                                 .contentType(MediaType.APPLICATION_JSON_VALUE))
                 .andExpectAll(status().isOk(),
-                        jsonPath("$.case_tasks_deletion_results.case_tasks_found").value(2),
+                        jsonPath("$.case_tasks_deletion_results.case_tasks_found").value(3),
                         jsonPath("$.case_tasks_deletion_results.deleted_case_tasks").value(1),
-                        jsonPath("$.case_tasks_deletion_results.cancelled_case_tasks").value(1),
+                        jsonPath("$.case_tasks_deletion_results.cancelled_case_tasks").value(2),
                         jsonPath("$.case_tasks_deletion_results.failed_case_tasks").value(0)
                 ).andReturn();
     }
@@ -124,8 +127,7 @@ public class DeleteTasksControllerTest extends SpringBootIntegrationBaseTest {
                 .andReturn();
     }
 
-
-    private void insertDummyTaskInDb(final String taskId, final String caseId, CFTTaskState cftTaskState) {
+    private void insertDummyTaskInDb(final String taskId, final String caseId, final CFTTaskState cftTaskState) {
         final TaskResource taskResource = getTaskResource(taskId, caseId, cftTaskState);
 
         final TaskRoleResource tribunalResource = new TaskRoleResource(
@@ -133,11 +135,10 @@ public class DeleteTasksControllerTest extends SpringBootIntegrationBaseTest {
                 true, new String[]{}, 1, false, "LegalOperations"
         );
         tribunalResource.setTaskId(taskId);
-        Set<TaskRoleResource> taskRoleResourceSet = Set.of(tribunalResource);
+        final Set<TaskRoleResource> taskRoleResourceSet = Set.of(tribunalResource);
         taskResource.setTaskRoleResources(taskRoleResourceSet);
         cftTaskDatabaseService.saveTask(taskResource);
     }
-
 
     private static TaskResource getTaskResource(String taskId, String caseId, CFTTaskState cftTaskState) {
         final TaskResource taskResource = new TaskResource(
