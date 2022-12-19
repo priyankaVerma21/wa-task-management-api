@@ -204,18 +204,20 @@ public class CftQueryService {
         return taskResourceDao.getTask(taskId, roleAssignments, permissionRequirements);
     }
 
+    //TODO refactor this esp when Granular permissions is live
     private PermissionRequirements findPermissionRequirement(SearchTaskRequest searchTaskRequest,
                                                              boolean isGranularPermissionEnabled) {
         if (isGranularPermissionEnabled) {
             //When granular permission feature flag is enabled, request is expected only in new format
-            SearchParameterRequestContext context = extractRequestContext(searchTaskRequest);
-            if (context == null) {
+            Optional<String> maybeRequestContext = Optional.ofNullable(searchTaskRequest.getRequestContext());
+            if (maybeRequestContext.isEmpty()) {
                 return PermissionRequirementBuilder.builder().buildSingleType(READ);
-            } else if (context.isEqual(RequestContext.AVAILABLE_TASKS)) {
+            } else if (maybeRequestContext.get().equals(RequestContext.AVAILABLE_TASKS.toString())) {
                 return PermissionRequirementBuilder.builder().buildSingleRequirementWithAnd(OWN, CLAIM);
-            } else if (context.isEqual(RequestContext.ALL_WORK)) {
+            } else if (maybeRequestContext.get().equals(RequestContext.ALL_WORK.toString())) {
                 return PermissionRequirementBuilder.builder().buildSingleType(MANAGE);
             }
+            //TODO - This should throw a 400 error as it will be an incorrect value.
             return PermissionRequirementBuilder.builder().buildSingleType(READ);
         } else {
             if (isAvailableTasksOnly(searchTaskRequest)) {
@@ -226,27 +228,18 @@ public class CftQueryService {
         }
     }
 
-    @Nullable
-    private SearchParameterRequestContext extractRequestContext(SearchTaskRequest searchTaskRequest) {
-
-        return (SearchParameterRequestContext) searchTaskRequest.getSearchParameters()
-            .stream()
-            .filter(SearchParameterRequestContext.class::isInstance)
-            .findFirst().orElse(null);
-    }
-
     // TODO: Once the granular permission feature flag enabled or available_tasks_only parameter is depreciated,
     // this method should only check AVAILABLE_TASK_ONLY context
     private boolean isAvailableTasksOnly(SearchTaskRequest searchTaskRequest) {
         final EnumMap<SearchParameterKey, SearchParameterBoolean> boolKeyMap = asEnumMapForBoolean(searchTaskRequest);
         SearchParameterBoolean availableTasksOnly = boolKeyMap.get(AVAILABLE_TASKS_ONLY);
 
-        SearchParameterRequestContext context = extractRequestContext(searchTaskRequest);
+        Optional<String> maybeRequestContext = Optional.ofNullable(searchTaskRequest.getRequestContext());
 
-        if (context == null) {
+        if (maybeRequestContext.isEmpty()) {
             return availableTasksOnly != null && availableTasksOnly.getValues();
         } else {
-            return context.isEqual(RequestContext.AVAILABLE_TASKS);
+            return maybeRequestContext.get().equals(RequestContext.AVAILABLE_TASKS.toString());
         }
     }
 

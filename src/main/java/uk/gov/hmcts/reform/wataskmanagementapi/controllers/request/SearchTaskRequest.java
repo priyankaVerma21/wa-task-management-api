@@ -3,6 +3,7 @@ package uk.gov.hmcts.reform.wataskmanagementapi.controllers.request;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
+import uk.gov.hmcts.reform.wataskmanagementapi.domain.entities.search.RequestContext;
 import uk.gov.hmcts.reform.wataskmanagementapi.domain.entities.search.SortingParameter;
 import uk.gov.hmcts.reform.wataskmanagementapi.domain.entities.search.parameter.SearchParameter;
 
@@ -26,6 +27,8 @@ public class SearchTaskRequest {
     private List<@Valid SearchParameter<?>> searchParameters;
     private List<SortingParameter> sortingParameters;
 
+    private String requestContext;
+
     private SearchTaskRequest() {
         //Default constructor for deserialization
         super();
@@ -36,9 +39,11 @@ public class SearchTaskRequest {
     }
 
     public SearchTaskRequest(List<SearchParameter<?>> searchParameters,
-                             List<SortingParameter> sortingParameters) {
+                             List<SortingParameter> sortingParameters,
+                             String requestContext) {
         this.searchParameters = searchParameters;
         this.sortingParameters = sortingParameters;
+        this.requestContext = requestContext;
     }
 
     public List<SearchParameter<?>> getSearchParameters() {
@@ -47,5 +52,9 @@ public class SearchTaskRequest {
 
     public List<SortingParameter> getSortingParameters() {
         return sortingParameters;
+    }
+
+    public String getRequestContext() {
+        return requestContext;
     }
 }
