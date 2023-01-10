@@ -13,9 +13,9 @@ import java.util.List;
 @Slf4j
 public class TaskCancellationLogService {
 
-    private TaskCancellationSummaryStringBuilder taskCancellationSummaryStringBuilder;
-    private TableTextBuilder tableTextBuilder;
-    private List<TaskCancellationView> taskCancellationViews = new ArrayList<>();
+    private final TaskCancellationSummaryStringBuilder taskCancellationSummaryStringBuilder;
+    private final TableTextBuilder tableTextBuilder;
+    private final List<TaskCancellationView> taskCancellationViews = new ArrayList<>();
 
     public TaskCancellationLogService(final TaskCancellationSummaryStringBuilder taskCancellationSummaryStringBuilder,
                                       final TableTextBuilder tableTextBuilder) {

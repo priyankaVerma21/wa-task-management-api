@@ -6,8 +6,8 @@ import uk.gov.hmcts.reform.wataskmanagementapi.exceptions.v2.InvalidRequestExcep
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.fail;
-import static uk.gov.hmcts.reform.wataskmanagementapi.services.utils.DeleteTaskConstants.CASEID_DELETE_EXCEPTION_MESSAGE;
 import static uk.gov.hmcts.reform.wataskmanagementapi.controllers.utils.InputParamsVerifier.verifyCaseId;
+import static uk.gov.hmcts.reform.wataskmanagementapi.services.utils.DeleteTaskConstants.CASEID_DELETE_EXCEPTION_MESSAGE;
 
 class InputParamsVerifierTest {
 

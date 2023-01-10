@@ -20,13 +20,12 @@ public final class DeleteTasksServiceHelper {
             final List<TaskResourceCaseQueryBuilder> taskResourceCaseQueryBuilders,
             final List<String> notTerminatedTaskIds,
             final List<String> terminatedTaskIds,
-            final int failedToDeleteTasks,
-            final int failedToCancelTasks) {
+            final int failedToDeleteTasks) {
         return new DeleteTasksResponse(CaseTasksDeletionResults.builder()
                 .caseTasksFound(taskResourceCaseQueryBuilders.size())
                 .deletedCaseTasks(terminatedTaskIds.size() - failedToDeleteTasks)
-                .cancelledCaseTasks(notTerminatedTaskIds.size() - failedToCancelTasks)
-                .failedCaseTasks(failedToDeleteTasks + failedToCancelTasks)
+                .eligibleForCancellationTasks(notTerminatedTaskIds.size())
+                .failedCaseTasks(failedToDeleteTasks)
                 .build());
     }
 

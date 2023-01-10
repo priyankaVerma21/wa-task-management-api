@@ -10,7 +10,8 @@ class TaskCancellationSummaryStringBuilderTest {
 
     @Test
     void buildSummaryString() {
-        final TaskCancellationSummaryStringBuilder taskCancellationSummaryStringBuilder = new TaskCancellationSummaryStringBuilder();
+        final TaskCancellationSummaryStringBuilder taskCancellationSummaryStringBuilder =
+                new TaskCancellationSummaryStringBuilder();
 
         final String summaryString = taskCancellationSummaryStringBuilder.buildSummaryString(4, 2, 2);
 

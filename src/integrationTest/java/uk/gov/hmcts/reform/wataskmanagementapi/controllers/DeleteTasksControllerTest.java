@@ -42,10 +42,8 @@ public class DeleteTasksControllerTest extends SpringBootIntegrationBaseTest {
     private CamundaServiceApi camundaServiceApi;
     @MockBean
     private RoleAssignmentServiceApi roleAssignmentServiceApi;
-
     @MockBean
     private AuthTokenGenerator authTokenGenerator;
-
     @MockBean
     private ClientAccessControlService clientAccessControlService;
     @MockBean
@@ -92,7 +90,7 @@ public class DeleteTasksControllerTest extends SpringBootIntegrationBaseTest {
                 .andExpectAll(status().isOk(),
                         jsonPath("$.case_tasks_deletion_results.case_tasks_found").value(3),
                         jsonPath("$.case_tasks_deletion_results.deleted_case_tasks").value(1),
-                        jsonPath("$.case_tasks_deletion_results.cancelled_case_tasks").value(2),
+                        jsonPath("$.case_tasks_deletion_results.eligible_for_cancellation_tasks").value(2),
                         jsonPath("$.case_tasks_deletion_results.failed_case_tasks").value(0)
                 ).andReturn();
     }

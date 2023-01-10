@@ -25,7 +25,7 @@ class TaskDeletionServiceTest {
     @Mock
     private CFTTaskDatabaseService cftTaskDatabaseService;
     @Mock
-    private TaskManagementService taskManagementService;
+    private DeletedTasksDatabaseService deletedTasksDatabaseService;
 
     @InjectMocks
     private TaskDeletionService taskDeletionService;
@@ -46,13 +46,14 @@ class TaskDeletionServiceTest {
 
         doNothing().when(cftTaskDatabaseService).deleteTask("234");
         doNothing().when(cftTaskDatabaseService).deleteTask("567");
+        doNothing().when(deletedTasksDatabaseService).addProcessedTasks("123");
 
         final DeleteTasksResponse deleteTasksResponse = taskDeletionService.deleteTasksByCaseId(caseId);
 
         assertThat(deleteTasksResponse.getCaseTasksDeletionResults().getCaseTasksFound()).isEqualTo(2);
         assertThat(deleteTasksResponse.getCaseTasksDeletionResults().getDeletedCaseTasks()).isEqualTo(2);
-        assertThat(deleteTasksResponse.getCaseTasksDeletionResults().getCancelledCaseTasks()).isEqualTo(0);
         assertThat(deleteTasksResponse.getCaseTasksDeletionResults().getFailedCaseTasks()).isEqualTo(0);
+        assertThat(deleteTasksResponse.getCaseTasksDeletionResults().getEligibleForCancellationTasks()).isEqualTo(0);
     }
 
     @Test
@@ -69,13 +70,11 @@ class TaskDeletionServiceTest {
         when(taskResourceCaseQueryBuilder1.getTaskId()).thenReturn("234");
         when(taskResourceCaseQueryBuilder2.getTaskId()).thenReturn("567");
 
-        doNothing().when(taskManagementService).setTaskStateToCancelled("234");
-        doNothing().when(taskManagementService).setTaskStateToCancelled("567");
+        doNothing().when(deletedTasksDatabaseService).addProcessedTasks("123");
 
         final DeleteTasksResponse deleteTasksResponse = taskDeletionService.deleteTasksByCaseId(caseId);
 
         assertThat(deleteTasksResponse.getCaseTasksDeletionResults().getCaseTasksFound()).isEqualTo(2);
-        assertThat(deleteTasksResponse.getCaseTasksDeletionResults().getCancelledCaseTasks()).isEqualTo(2);
         assertThat(deleteTasksResponse.getCaseTasksDeletionResults().getDeletedCaseTasks()).isEqualTo(0);
         assertThat(deleteTasksResponse.getCaseTasksDeletionResults().getFailedCaseTasks()).isEqualTo(0);
     }
@@ -101,14 +100,13 @@ class TaskDeletionServiceTest {
         when(taskResourceCaseQueryBuilder3.getTaskId()).thenReturn("765");
 
         doNothing().when(cftTaskDatabaseService).deleteTask("234");
-        doNothing().when(taskManagementService).setTaskStateToCancelled("765");
+        doNothing().when(deletedTasksDatabaseService).addFailedToDeleteTasks("123");
         doThrow(RuntimeException.class).when(cftTaskDatabaseService).deleteTask("567");
 
         final DeleteTasksResponse deleteTasksResponse = taskDeletionService.deleteTasksByCaseId(caseId);
 
         assertThat(deleteTasksResponse.getCaseTasksDeletionResults().getCaseTasksFound()).isEqualTo(4);
         assertThat(deleteTasksResponse.getCaseTasksDeletionResults().getDeletedCaseTasks()).isEqualTo(1);
-        assertThat(deleteTasksResponse.getCaseTasksDeletionResults().getCancelledCaseTasks()).isEqualTo(1);
         assertThat(deleteTasksResponse.getCaseTasksDeletionResults().getFailedCaseTasks()).isEqualTo(1);
     }
 }

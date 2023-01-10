@@ -9,6 +9,7 @@ import java.util.List;
 import static uk.gov.hmcts.reform.wataskmanagementapi.services.utils.LogConstants.COLUMN_NAMES;
 
 @Service
+@SuppressWarnings("PMD.DataflowAnomalyAnalysis")
 public class TableTextBuilder {
 
     public TextTable buildTextTable(final List<TaskCancellationView> taskCancellationViews) {

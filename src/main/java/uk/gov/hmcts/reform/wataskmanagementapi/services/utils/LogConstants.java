@@ -4,7 +4,7 @@ import java.util.List;
 
 import static java.util.Arrays.asList;
 
-public class LogConstants {
+public final class LogConstants {
 
     public static final String SUMMARY_STRING = "\r\nTask cancellation summary : ";
     public static final String TOTAL_CANCELLED_TASKS_STRING = "\r\nTotal eligible for cancellation tasks : ";

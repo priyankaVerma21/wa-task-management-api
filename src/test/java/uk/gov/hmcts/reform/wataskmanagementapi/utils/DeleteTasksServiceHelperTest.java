@@ -36,16 +36,15 @@ class DeleteTasksServiceHelperTest {
         final List<String> notTerminatedTasks = List.of("1");
         final List<String> terminatedTaskIds = List.of("2");
         final int failedToDeleteTasks = 1;
-        final int failedToCancelTasks = 1;
 
         final DeleteTasksResponse deleteTasksResponse =
                 buildDeleteTasksResponse(taskResourceCaseQueryBuilders, notTerminatedTasks,
-                        terminatedTaskIds, failedToDeleteTasks, failedToCancelTasks);
+                        terminatedTaskIds, failedToDeleteTasks);
 
         assertThat(deleteTasksResponse.getCaseTasksDeletionResults().getCaseTasksFound()).isEqualTo(2);
-        assertThat(deleteTasksResponse.getCaseTasksDeletionResults().getCancelledCaseTasks()).isEqualTo(0);
+        assertThat(deleteTasksResponse.getCaseTasksDeletionResults().getEligibleForCancellationTasks()).isEqualTo(1);
         assertThat(deleteTasksResponse.getCaseTasksDeletionResults().getDeletedCaseTasks()).isEqualTo(0);
-        assertThat(deleteTasksResponse.getCaseTasksDeletionResults().getFailedCaseTasks()).isEqualTo(2);
+        assertThat(deleteTasksResponse.getCaseTasksDeletionResults().getFailedCaseTasks()).isEqualTo(1);
     }
 
     @Test

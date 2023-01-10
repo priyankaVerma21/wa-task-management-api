@@ -25,9 +25,9 @@ public class CaseTasksDeletionResults {
 
     @Schema(
             required = true,
-            description = "Cancelled case tasks"
+            description = "Eligible For Cancellation Tasks"
     )
-    private int cancelledCaseTasks;
+    private int eligibleForCancellationTasks;
 
     @Schema(
             required = true,
@@ -35,15 +35,13 @@ public class CaseTasksDeletionResults {
     )
     private int failedCaseTasks;
 
-    public CaseTasksDeletionResults(final int caseTasksFound,
-                                    final int deletedCaseTasks,
-                                    final int cancelledCaseTasks,
-                                    final int failedCaseTasks) {
-        this.caseTasksFound = caseTasksFound;
-        this.deletedCaseTasks = deletedCaseTasks;
-        this.cancelledCaseTasks = cancelledCaseTasks;
-        this.failedCaseTasks = failedCaseTasks;
-    }
+//    public CaseTasksDeletionResults(final int caseTasksFound,
+//                                    final int deletedCaseTasks,
+//                                    final int failedCaseTasks) {
+//        this.caseTasksFound = caseTasksFound;
+//        this.deletedCaseTasks = deletedCaseTasks;
+//        this.failedCaseTasks = failedCaseTasks;
+//    }
 
     public int getCaseTasksFound() {
         return caseTasksFound;
@@ -53,11 +51,11 @@ public class CaseTasksDeletionResults {
         return deletedCaseTasks;
     }
 
-    public int getCancelledCaseTasks() {
-        return cancelledCaseTasks;
-    }
-
     public int getFailedCaseTasks() {
         return failedCaseTasks;
+    }
+
+    public int getEligibleForCancellationTasks() {
+        return eligibleForCancellationTasks;
     }
 }
