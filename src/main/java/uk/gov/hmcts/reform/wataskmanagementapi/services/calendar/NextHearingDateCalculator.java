@@ -2,7 +2,8 @@ package uk.gov.hmcts.reform.wataskmanagementapi.services.calendar;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import uk.gov.hmcts.reform.wataskmanagementapi.domain.entities.camunda.ConfigurationDmnEvaluationResponse;
+import uk.gov.hmcts.reform.wataskmanagementapi.domain.camunda.ConfigurationDmnEvaluationResponse;
+import uk.gov.hmcts.reform.wataskmanagementapi.services.calendar.DateTypeConfigurator.DateTypeObject;
 
 import java.util.List;
 import java.util.Optional;
@@ -17,22 +18,23 @@ public class NextHearingDateCalculator extends DueDateCalculator {
     @Override
     public boolean supports(
         List<ConfigurationDmnEvaluationResponse> dueDateProperties,
-        DateType dateType,
+        DateTypeObject dateTypeObject,
         boolean isReconfigureRequest) {
 
-        return NEXT_HEARING_DATE == dateType
-            && Optional.ofNullable(getProperty(dueDateProperties, NEXT_HEARING_DATE.getType())).isPresent()
-            && !isReconfigureRequest;
+        return NEXT_HEARING_DATE == dateTypeObject.dateType()
+            && Optional.ofNullable(getProperty(dueDateProperties, NEXT_HEARING_DATE.getType(), isReconfigureRequest))
+            .isPresent();
     }
 
     @Override
     public ConfigurationDmnEvaluationResponse calculateDate(
-        List<ConfigurationDmnEvaluationResponse> dueDateProperties,
-        DateType dateType) {
+        List<ConfigurationDmnEvaluationResponse> configResponses,
+        DateTypeObject dateType,
+        boolean isReconfigureRequest) {
         return calculatedDate(
             dateType,
-            getProperty(dueDateProperties, NEXT_HEARING_DATE.getType()),
-            getProperty(dueDateProperties, NEXT_HEARING_DATE_TIME)
+            getProperty(configResponses, NEXT_HEARING_DATE.getType(), isReconfigureRequest),
+            getProperty(configResponses, NEXT_HEARING_DATE_TIME, isReconfigureRequest)
         );
     }
 }
