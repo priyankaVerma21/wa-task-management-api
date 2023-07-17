@@ -17,6 +17,7 @@ plugins {
   id 'org.flywaydb.flyway' version '9.3.0'
 }
 
+
 group = 'uk.gov.hmcts.reform'
 version = '0.0.1'
 
